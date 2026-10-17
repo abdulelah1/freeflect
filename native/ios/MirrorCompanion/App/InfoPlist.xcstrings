@@ -9,6 +9,12 @@
             "state": "translated",
             "value": "فريفلكت"
           }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FreeFlect"
+          }
         }
       },
       "extractionState": "manual"
@@ -20,6 +26,12 @@
             "state": "translated",
             "value": "يبحث فريفلكت عن الكمبيوتر على شبكة الواي فاي هذه لمشاركة شاشتك وحافظتك وملفاتك."
           }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FreeFlect finds your computer on this Wi-Fi network to share your screen, clipboard and files."
+          }
         }
       },
       "extractionState": "manual"
@@ -30,6 +42,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "اختر الصور والفيديوهات لإرسالها إلى الكمبيوتر."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose photos and videos to send to your computer."
           }
         }
       },
