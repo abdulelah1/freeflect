@@ -1,0 +1,23 @@
+[package]
+name = "mirror-node"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+mirror-core.workspace = true
+mirror-media.workspace = true
+mirror-android.workspace = true
+mirror-ios.workspace = true
+mirror-companion.workspace = true
+napi = { version = "3", default-features = false, features = ["napi8", "tokio_rt"] }
+napi-derive = "3"
+serde_json.workspace = true
+tokio.workspace = true
+
+[build-dependencies]
+napi-build = "2"

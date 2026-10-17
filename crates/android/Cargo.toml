@@ -1,0 +1,16 @@
+[package]
+name = "mirror-android"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+mirror-core.workspace = true
+mirror-media.workspace = true
+tokio.workspace = true
+serde.workspace = true
+async-trait.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true }

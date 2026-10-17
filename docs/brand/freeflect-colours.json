@@ -1,0 +1,37 @@
+{
+  "cobalt": {
+    "name": "Cobalt",
+    "hex": "#3B6FE0",
+    "oklch": "oklch(0.569 0.181 263.2)",
+    "use": "Brand and app accent in light mode; the phone in the mark"
+  },
+  "cobalt-bright": {
+    "name": "Cobalt bright",
+    "hex": "#6E95F2",
+    "oklch": "oklch(0.683 0.144 265.6)",
+    "use": "Brand and app accent in dark mode; the phone on dark grounds"
+  },
+  "ink": {
+    "name": "Ink",
+    "hex": "#18181B",
+    "oklch": "oklch(0.21 0.006 285.9)",
+    "use": "The frame on light grounds; app icon body; dark backgrounds"
+  },
+  "frost": {
+    "name": "Frost",
+    "hex": "#F4F4F5",
+    "oklch": "oklch(0.967 0.001 286.4)",
+    "use": "The frame on dark grounds"
+  },
+  "paper": {
+    "name": "Paper",
+    "hex": "#FAFAFA",
+    "oklch": "oklch(0.985 0 0)",
+    "use": "Light backgrounds"
+  },
+  "_contrast": {
+    "white text on cobalt": "4.63:1 (AA)",
+    "cobalt on paper": "4.44:1 (AA for 18 px+ or bold UI)",
+    "cobalt bright on ink": "6.11:1 (AA)"
+  }
+}

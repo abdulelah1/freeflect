@@ -1,0 +1,256 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "The clipboard has no text to send.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحافظة لا تحتوي على نص لإرساله."
+          }
+        }
+      }
+    },
+    "Clipboard sent": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أُرسلت الحافظة"
+          }
+        }
+      }
+    },
+    "Sent %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أُرسل %@"
+          }
+        }
+      }
+    },
+    "Received %@. Find it in the Files app, On My iPhone, FreeFlect.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وصل %@. تجده في تطبيق الملفات، ضمن على الآيفون، فريفلكت."
+          }
+        }
+      }
+    },
+    "Copied from your computer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نُسخ من الكمبيوتر"
+          }
+        }
+      }
+    },
+    "Screen": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الشاشة"
+          }
+        }
+      }
+    },
+    "Share screen": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مشاركة الشاشة"
+          }
+        }
+      }
+    },
+    "Tap the button, choose FreeFlect, then Start Broadcast.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اضغط الزر، واختر فريفلكت، ثم بدء البث."
+          }
+        }
+      }
+    },
+    "Send to computer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إرسال إلى الكمبيوتر"
+          }
+        }
+      }
+    },
+    "Send clipboard": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إرسال الحافظة"
+          }
+        }
+      }
+    },
+    "Send photos or videos": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إرسال صور أو فيديوهات"
+          }
+        }
+      }
+    },
+    "Send files": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إرسال ملفات"
+          }
+        }
+      }
+    },
+    "FreeFlect": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فريفلكت"
+          }
+        }
+      }
+    },
+    "Looking for your computer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ البحث عن الكمبيوتر"
+          }
+        }
+      }
+    },
+    "Open FreeFlect on your computer and keep both on the same Wi-Fi.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "افتح فريفلكت على الكمبيوتر وأبقِ الجهازين على نفس شبكة الواي فاي."
+          }
+        }
+      }
+    },
+    "Allow this iPhone on %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسمح لهذا الآيفون على %@"
+          }
+        }
+      }
+    },
+    "Connected to %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متصل بـ %@"
+          }
+        }
+      }
+    },
+    "Sending to %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ الإرسال إلى %@"
+          }
+        }
+      }
+    },
+    "Sent": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم الإرسال"
+          }
+        }
+      }
+    },
+    "Turn on Local Network for FreeFlect in Settings, Privacy & Security, Local Network.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فعّل الشبكة المحلية لتطبيق فريفلكت من الإعدادات، الخصوصية والأمن، الشبكة المحلية."
+          }
+        }
+      }
+    },
+    "Can't search this network: %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر البحث في هذه الشبكة: %@"
+          }
+        }
+      }
+    },
+    "Couldn't reach %@.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر الوصول إلى %@."
+          }
+        }
+      }
+    },
+    "The computer refused the connection.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رفض الكمبيوتر الاتصال."
+          }
+        }
+      }
+    },
+    "Disconnected from %@.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "انقطع الاتصال بـ %@."
+          }
+        }
+      }
+    },
+    "your computer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الكمبيوتر"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,89 @@
+# Generate the Xcode project with: xcodegen generate
+# No signing team is set here: this is an open-source project, and everyone
+# signs with their own. The desktop app passes the user's choice:
+#   Apple ID in Xcode:     DEVELOPMENT_TEAM=<team>
+#   provisioning profiles: CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=<team>
+#                          FF_PROFILE_APP / FF_PROFILE_BROADCAST / FF_PROFILE_SHARE=<uuid>
+# To build in Xcode instead, pick your team under Signing & Capabilities.
+name: MirrorCompanion
+options:
+  bundleIdPrefix: com.freeflect
+  developmentLanguage: en
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    # Bundle ids: FF_BUNDLE_ID for the app, plus .broadcast and .share for the
+    # extensions. The installer overrides it only when Apple won't register
+    # com.freeflect.ios for the user's team, or a profile is for another id.
+    FF_BUNDLE_ID: com.freeflect.ios
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1,2"
+targets:
+  MirrorCompanion:
+    type: application
+    platform: iOS
+    sources: [App, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(FF_BUNDLE_ID)
+        PROVISIONING_PROFILE_SPECIFIER: $(FF_PROFILE_APP)
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: FreeFlect
+        UILaunchScreen: {}
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        NSLocalNetworkUsageDescription: FreeFlect finds your computer on this Wi-Fi network to share your screen, clipboard and files.
+        NSBonjourServices: [_mirror-desk._tcp]
+        NSPhotoLibraryUsageDescription: Choose photos and videos to send to your computer.
+    dependencies:
+      - target: Broadcast
+      - target: Share
+  Broadcast:
+    type: app-extension
+    platform: iOS
+    sources: [Broadcast, Shared, ../../shared/AacEncoder.swift]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(FF_BUNDLE_ID).broadcast
+        PROVISIONING_PROFILE_SPECIFIER: $(FF_PROFILE_BROADCAST)
+    info:
+      path: Broadcast/Info.plist
+      properties:
+        CFBundleDisplayName: FreeFlect
+        NSLocalNetworkUsageDescription: FreeFlect sends your screen to your computer on this Wi-Fi network.
+        NSBonjourServices: [_mirror-desk._tcp]
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.broadcast-services-upload
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
+          RPBroadcastProcessMode: RPBroadcastProcessModeSampleBuffer
+  Share:
+    type: app-extension
+    platform: iOS
+    sources: [Share, Shared]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(FF_BUNDLE_ID).share
+        PROVISIONING_PROFILE_SPECIFIER: $(FF_PROFILE_SHARE)
+    info:
+      path: Share/Info.plist
+      properties:
+        CFBundleDisplayName: FreeFlect
+        NSLocalNetworkUsageDescription: FreeFlect sends what you share to your computer on this Wi-Fi network.
+        NSBonjourServices: [_mirror-desk._tcp]
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsText: true
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsImageWithMaxCount: 20
+              NSExtensionActivationSupportsMovieWithMaxCount: 5
+              NSExtensionActivationSupportsFileWithMaxCount: 20

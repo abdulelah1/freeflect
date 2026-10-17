@@ -1,0 +1,39 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "CFBundleDisplayName": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فريفلكت"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "NSLocalNetworkUsageDescription": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يبحث فريفلكت عن الكمبيوتر على شبكة الواي فاي هذه لمشاركة شاشتك وحافظتك وملفاتك."
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "NSPhotoLibraryUsageDescription": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختر الصور والفيديوهات لإرسالها إلى الكمبيوتر."
+          }
+        }
+      },
+      "extractionState": "manual"
+    }
+  }
+}

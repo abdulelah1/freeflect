@@ -1,0 +1,20 @@
+{
+  "name": "mirror-project",
+  "private": true,
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:native": "pnpm --filter @mirror/native build",
+    "build:server": "./scripts/build-android-server.sh",
+    "dev": "pnpm build:native && pnpm build:server && pnpm build:ios-capture && pnpm --filter @mirror/desktop dev",
+    "build": "pnpm build:native && pnpm build:server && pnpm build:ios-capture && pnpm --filter @mirror/desktop build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "cargo test --workspace && pnpm -r test",
+    "spike:fixture": "node scripts/make-h264-fixture.mjs",
+    "probe:android": "cargo run -p mirror-android --example probe -- android-server/build/mirror-server.jar",
+    "build:ios-capture": "./scripts/build-ios-capture.sh",
+    "release:mac": "./scripts/prepare-release.sh && ./scripts/package-mac.sh"
+  }
+}

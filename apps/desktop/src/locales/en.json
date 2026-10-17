@@ -1,0 +1,766 @@
+{
+  "_meta": {
+    "name": "English",
+    "dir": "ltr"
+  },
+  "common": {
+    "usb": "USB",
+    "wifi": "Wi-Fi",
+    "details": "Details",
+    "tryAgain": "Try again",
+    "runDoctor": "Run Connection Doctor",
+    "yourPhone": "your phone",
+    "dismiss": "Dismiss",
+    "refresh": "Refresh",
+    "close": "Close",
+    "cancel": "Cancel",
+    "iphone": "iPhone",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "sidebar": {
+    "devices": "Devices",
+    "inOwnWindow": "In its own window",
+    "state": {
+      "device": "Ready",
+      "unauthorized": "Tap Allow on your phone",
+      "offline": "Not responding",
+      "other": "Unavailable"
+    },
+    "openWindow": "Open in its own window",
+    "openWindowFor": "Open {name} in its own window",
+    "allDevices": "All devices",
+    "allDevicesHint": "See and control every phone",
+    "setup": "Set up a phone",
+    "setupHint": "Step-by-step guide",
+    "wifi": "Connect over Wi-Fi",
+    "wifiHint": "No cable needed",
+    "testStream": "Test stream",
+    "testStreamHint": "Check video performance",
+    "settings": "Settings",
+    "settingsHint": "Language, save locations, files",
+    "noPhone": "No phone connected",
+    "noPhoneBody": "The setup guide walks you through it in a few minutes. Phones you have set up before appear here on their own.",
+    "setupYourPhone": "Set up your phone",
+    "adbTitle": "Can't look for Android phones",
+    "adbBody": "The Android connection service isn't running. Run adb start-server in a terminal, then try again."
+  },
+  "app": {
+    "name": "FreeFlect"
+  },
+  "errors": {
+    "unauthorized": {
+      "title": "Allow this computer on your phone",
+      "body": "Unlock your phone and tap Allow on the USB debugging prompt, then try again."
+    },
+    "notFound": {
+      "title": "Phone not found",
+      "body": "Check the connection, then try again."
+    },
+    "notStreaming": {
+      "title": "The iPhone isn't sharing its screen",
+      "body": "In the FreeFlect app on the iPhone, start the broadcast, then try again."
+    },
+    "startFailed": {
+      "title": "Couldn't start mirroring",
+      "body": "Unlock your phone and try again. If it keeps happening, reconnect the cable."
+    },
+    "notBack": {
+      "title": "Your phone did not come back",
+      "body": "Check the connection and that the phone is unlocked, then try again."
+    }
+  },
+  "toast": {
+    "updateAvailable": "{app} {version} is available",
+    "updateAvailableBody": "Download the new version and replace {app} in Applications.",
+    "download": "Download",
+    "received": "Received {name}",
+    "showInFolder": "Show in folder",
+    "copiedFromPhone": "Copied from your phone",
+    "recordingFailed": "Couldn't save the recording",
+    "recordingSaved": "Recording saved",
+    "recordingParts": {
+      "one": "Saved in {count} part because the phone rotated.",
+      "other": "Saved in {count} parts because the phone rotated."
+    },
+    "soundOnPhone": "Sound stays on your phone",
+    "gifSaved": "GIF saved",
+    "gifFailed": "Couldn't save the GIF",
+    "screenshotSaved": "Screenshot saved",
+    "screenshotFailed": "Couldn't save the screenshot",
+    "screenshotCopied": "Screenshot copied",
+    "screenshotCopiedBody": "Paste it anywhere.",
+    "copyFailed": "Couldn't copy the screenshot",
+    "upToDate": "{app} is up to date",
+    "upToDateBody": "You have the newest version.",
+    "wifiConnected": "Connected over Wi-Fi",
+    "wifiConnectedBody": "You can unplug the cable now.",
+    "inFolder": "In {parent}, {folder} folder.",
+    "inOneFolder": "In the {folder} folder."
+  },
+  "transfer": {
+    "install": {
+      "active": "Installing {name}",
+      "done": "Installed {name}",
+      "failed": "Couldn't install {name}"
+    },
+    "pull": {
+      "active": "Saving {name}",
+      "done": "Saved {name}",
+      "failed": "Couldn't save {name}"
+    },
+    "push": {
+      "active": "Sending {name}",
+      "done": "Sent {name}",
+      "doneBody": "It's on your phone now.",
+      "failed": "Couldn't send {name}"
+    }
+  },
+  "quality": {
+    "low-latency": "Low latency",
+    "balanced": "Balanced",
+    "max": "Max quality"
+  },
+  "stage": {
+    "region": "Phone screen",
+    "exitFullscreen": "Exit full screen",
+    "fullscreen": "Full screen",
+    "quality": "Quality",
+    "saveScreenshot": "Save screenshot",
+    "saveScreenshotHint": "Save screenshot (Cmd/Ctrl+Shift+S)",
+    "copyScreenshot": "Copy screenshot",
+    "copyScreenshotHint": "Copy screenshot to clipboard (Cmd/Ctrl+Shift+C)",
+    "files": "Phone files",
+    "filesIos": "Photos and videos on the iPhone",
+    "filesAndroid": "Browse phone files",
+    "devtools": "Developer tools",
+    "devtoolsHint": "Developer tools: logs, apps, device stats",
+    "screenOff": "Phone screen off",
+    "screenOn": "Turn the phone screen back on",
+    "screenOffHint": "Turn the phone screen off (mirroring continues)",
+    "soundHere": "Sound plays on this computer",
+    "soundPhone": "Sound plays on the phone",
+    "soundHereHint": "Sound plays here. Click to keep it on the phone.",
+    "soundPhoneHint": "Sound stays on the phone. Click to play it here.",
+    "deviceWindow": "Device window",
+    "deviceWindowHint": "Show only the phone (Cmd/Ctrl+Shift+D)",
+    "stats": "Stream stats",
+    "statsHint": "Stream stats (Cmd/Ctrl+Alt+S)",
+    "gifHint": "Capture an animated GIF (up to 30 seconds)",
+    "gif": "GIF",
+    "gifSaving": "Saving",
+    "recordHint": "Record the screen (Cmd/Ctrl+Shift+R)",
+    "record": "Record",
+    "stopRecording": "Stop",
+    "stopMirroring": "Stop mirroring",
+    "screenLabel": "Phone screen. Click to tap, type to send keys.",
+    "frameRate": "Frame rate",
+    "stop": "Stop",
+    "start": "Start",
+    "starting": "Starting on your phone",
+    "reconnecting": "Reconnecting to {name}",
+    "reconnectingBody": "Mirroring resumes on its own when the phone is back. Check the cable or Wi-Fi and keep the phone unlocked.",
+    "stopWaiting": "Stop waiting",
+    "stopped": "Mirroring stopped",
+    "stoppedBody": "Press Try again to reconnect.",
+    "fixtureReady": "Test stream ready",
+    "fixtureReadyBody": "Plays a recorded phone-sized video through the same decoder your phone uses.",
+    "pick": "Pick a device",
+    "pickBody": "Choose a phone from the list to start mirroring."
+  },
+  "crop": {
+    "label": "Crop the screen",
+    "change": "Change or remove the crop",
+    "start": "Show only part of the screen",
+    "note": "Screenshots and GIFs use the crop. Recordings keep the whole screen.",
+    "whole": "Whole screen",
+    "apply": "Apply"
+  },
+  "drop": {
+    "install": "Drop to install the app",
+    "send": "Drop to send to your phone",
+    "iosHint": "Files appear in the Files app, On My iPhone, FreeFlect.",
+    "apkHint": "APK files are installed directly.",
+    "androidHint": "Files go to the phone's folder set in Settings. APKs are installed."
+  },
+  "nav": {
+    "label": "Phone navigation",
+    "backHint": "Back (or right click)",
+    "back": "Back",
+    "home": "Home",
+    "recents": "Recent apps"
+  },
+  "device": {
+    "screenLabel": "{name} screen. Click to tap, type to send keys.",
+    "disconnected": "Your phone disconnected",
+    "connecting": "Connecting to your phone",
+    "closeWindow": "Close window",
+    "backToApp": "Back to app",
+    "backToAppWindow": "Back to app window",
+    "controls": "Device controls",
+    "pin": "Keep on top",
+    "unpin": "Stop keeping on top",
+    "screenOff": "Turn the phone screen off",
+    "power": "Power",
+    "volumeUp": "Volume up",
+    "volumeDown": "Volume down",
+    "record": "Record the screen",
+    "stopRecording": "Stop recording ({elapsed})",
+    "resizeLabel": "Resize. Drag, or use the arrow keys. Double-click to reset.",
+    "resizeHint": "Drag to resize (double-click to reset)"
+  },
+  "iosControl": {
+    "errorLabel": "Developer control: {message}",
+    "onLabel": "Developer control on. Click to turn off",
+    "startingLabel": "Starting developer control. Click to cancel",
+    "offLabel": "Turn on developer control",
+    "needsCable": "Controlling an iPhone needs a cable connection.",
+    "wifiViewOnly": "Viewing only over Wi-Fi. Drop files here to send them to the FreeFlect app on the iPhone.",
+    "viewOnly": "Viewing only.",
+    "needsWda": "Developer control needs Appium's WebDriverAgent built for this iPhone.",
+    "group": "iPhone developer control",
+    "on": "Developer control on",
+    "switch": "Developer control",
+    "starting": "Starting WebDriverAgent on the iPhone. Keep it unlocked.",
+    "active": "Clicks, drags and typing go to the iPhone."
+  },
+  "hud": {
+    "label": "Stream statistics",
+    "fps": "Frame rate",
+    "latency": "Latency",
+    "decode": "Decode",
+    "bitrate": "Bitrate",
+    "resolution": "Resolution",
+    "codec": "Codec"
+  },
+  "media": {
+    "label": "iPhone photos and videos",
+    "title": "Photos and videos",
+    "hint": "Drag an item to your desktop to copy it. Photos kept only in iCloud are not on the phone and don't appear here.",
+    "empty": "No photos or videos are stored on this iPhone.",
+    "dragHint": "Drag to your desktop or a folder to copy it",
+    "save": "Save to this computer",
+    "saveFile": "Save {name} to this computer"
+  },
+  "approval": {
+    "title": "Allow {name} to connect?",
+    "body": "It's running the FreeFlect app on this Wi-Fi network. Once allowed, it can share its screen, clipboard and files with this computer.",
+    "deny": "Don't allow",
+    "allow": "Allow"
+  },
+  "settings": {
+    "close": "Close settings",
+    "title": "Settings",
+    "language": {
+      "title": "Language",
+      "label": "App language",
+      "system": "Same as the system",
+      "hint": "Menus, setup and messages change right away."
+    },
+    "saving": {
+      "title": "Saving",
+      "screenshots": "Screenshots",
+      "recordings": "Recordings and GIFs",
+      "received": "Files from iPhone",
+      "receivedHint": "Photos, files and links sent from the FreeFlect iPhone app."
+    },
+    "sending": {
+      "title": "Sending files to phones",
+      "iphoneHint": "Files dropped on an iPhone go to the FreeFlect app. Find them in the Files app, under On My iPhone, FreeFlect.",
+      "androidFolder": "Android folder",
+      "androidDefault": "Use the default Android folder",
+      "androidHint": "Files dropped on an Android phone go here. APK files are installed instead.",
+      "androidInvalid": "Use a folder in the phone storage, starting with /sdcard/ or /storage/."
+    },
+    "clipboard": {
+      "title": "Clipboard and sound",
+      "share": "Share the clipboard",
+      "shareHint": "Text you copy on the computer can be pasted on the phone, and the other way round.",
+      "sound": "Play the phone's sound on this computer",
+      "soundHint": "Android phones go quiet while mirroring. An iPhone on a cable does too."
+    },
+    "fullscreen": {
+      "title": "Full screen",
+      "only": "Show only the phone in full screen",
+      "onlyHint": "When off, the devices list and the controls stay visible in full screen."
+    },
+    "companion": {
+      "title": "FreeFlect iPhone app",
+      "allow": "Let the iPhone app connect",
+      "allowHint": "The app finds this computer on your Wi-Fi to share its screen, clipboard and files.",
+      "install": "Install on an iPhone",
+      "installHint": "The FreeFlect iPhone app isn't on the App Store. This computer builds it with your own Apple ID or provisioning profile and installs it over the cable.",
+      "allowed": "Allowed iPhones",
+      "allowedEmpty": "None yet. The first time an iPhone opens the FreeFlect app, this computer asks whether to allow it.",
+      "forget": "Forget"
+    },
+    "updates": {
+      "title": "Updates",
+      "check": "Check for new versions",
+      "checkHint": "Once a day, {app} looks at its releases page and tells you when a new version is ready to download."
+    },
+    "folder": {
+      "useDefault": "Use the default folder",
+      "useDefaultFor": "Use the default folder for {label}",
+      "open": "Open the folder",
+      "openFor": "Open the {label} folder",
+      "change": "Change"
+    }
+  },
+  "installer": {
+    "preparing": "Preparing the project",
+    "team": "Signing team",
+    "noTeams": "No Apple ID in Xcode yet. Follow the steps below, or use a provisioning profile.",
+    "chooseTeam": "Choose a team",
+    "freeTeam": "Free team: the app stops opening after 7 days. Install it again then.",
+    "paidTeam": "Paid team: the app keeps working for a year.",
+    "noPhones": "Connect the iPhone with a cable, unlock it, and tap Trust if it asks.",
+    "choosePhone": "Choose an iPhone",
+    "install": "Install on iPhone",
+    "busy": "{message}. This takes a minute or two.",
+    "installedOn": "Installed on {device}",
+    "trustTitle": "One more step on the iPhone",
+    "trust1": "Open Settings, General, VPN & Device Management.",
+    "trust2": "Tap the developer named after your Apple ID, then Trust.",
+    "trust3": "Open FreeFlect on the iPhone.",
+    "opened": "FreeFlect is open on the iPhone.",
+    "reinstallBy": "With a free team, install it again before {date}.",
+    "last": "Last installed on {device} with {team}, {date}.",
+    "expired": "It has stopped opening. Install it again.",
+    "expires": "Install again before {date}.",
+    "free": "free",
+    "paid": "paid",
+    "missingProject": "The iPhone app project is missing. In a development copy, run xcodegen in native/ios/MirrorCompanion.",
+    "methodLabel": "How to sign the app",
+    "method": {
+      "team": "Apple ID in Xcode",
+      "profile": "Provisioning profile"
+    },
+    "profile": "Provisioning profile",
+    "noProfiles": "No provisioning profiles are installed on this Mac. Follow the steps below, or use an Apple ID.",
+    "chooseProfile": "Choose a profile",
+    "profileInfo": "{team}, signs {id}, valid until {date}.",
+    "profileExpired": "expired on {date}",
+    "profileNoDevice": "doesn't include this iPhone",
+    "help": {
+      "teamTitle": "How to add an Apple ID",
+      "team1": "Open Xcode, then Settings, Accounts.",
+      "team2": "Click + at the bottom, choose Apple ID and sign in. A free Apple ID works.",
+      "team3": "Your Apple ID now shows a team, such as \"Your Name (Personal Team)\".",
+      "team4": "Come back here and press Refresh, then choose that team.",
+      "teamNote": "With a free Apple ID the app stops opening after 7 days and has to be installed again. A paid Apple Developer membership makes it last a year.",
+      "profileTitle": "How to use a provisioning profile",
+      "profile1": "Sign in at developer.apple.com, then Certificates, Identifiers & Profiles. This needs a paid Apple Developer membership.",
+      "profile2": "Under Identifiers, create the App IDs com.freeflect.ios, com.freeflect.ios.broadcast and com.freeflect.ios.share, or one wildcard App ID such as com.freeflect.* or com.yourname.*.",
+      "profile3": "Under Devices, add this iPhone's identifier (UDID). Xcode's Devices window shows it.",
+      "profile4": "Under Profiles, create an iOS App Development profile (or Ad Hoc) for that App ID, with your certificate and this iPhone. Download it and double-click it.",
+      "profile5": "Make sure the matching certificate is in your keychain, then press Refresh and choose the profile.",
+      "profileNote": "A profile someone gave you works too, if it includes this iPhone and you have its certificate. The app lasts as long as the profile."
+    }
+  },
+  "phoneMenu": {
+    "settings": "Settings",
+    "aboutPhone": "About phone",
+    "aboutDevice": "About device",
+    "softwareInfo": "Software information",
+    "buildNumber": "Build number",
+    "developerOptions": "Developer options",
+    "system": "System",
+    "osVersion": "OS version (or MIUI version)",
+    "additionalSettings": "Additional settings",
+    "version": "Version",
+    "systemUpdates": "System & updates"
+  },
+  "brands": {
+    "other": "Another brand",
+    "xiaomiSecurity": "USB debugging (Security settings)",
+    "xiaomiSecurityWhy": "Lets taps and typing reach the phone. Xiaomi asks you to sign in to a Mi account for this.",
+    "installViaUsb": "Install via USB",
+    "installViaUsbWhy": "Lets you drop APK files to install them.",
+    "permissionMonitoring": "Disable permission monitoring",
+    "permissionMonitoringWhy": "Needed on some models for taps to work.",
+    "chargeOnly": "Allow ADB debugging in charge only mode",
+    "chargeOnlyWhy": "Keeps the connection when USB is set to charging."
+  },
+  "setup": {
+    "yourIphone": "Your iPhone",
+    "yourPhone": "Your phone",
+    "close": "Close setup",
+    "platform": {
+      "title": "Which phone do you want to connect?",
+      "android": "Android",
+      "androidBody": "Samsung, Pixel, Xiaomi and other Android phones.",
+      "iphoneBody": "iPhone and iPad. Watch the screen, share files and the clipboard."
+    },
+    "method": {
+      "iosTitle": "How do you want to connect your iPhone?",
+      "iosCable": "Recommended. Sharpest picture, the phone's sound, photos, and control from this computer.",
+      "iosCableMacOnly": "Works on a Mac. On this computer, use Wi-Fi with the FreeFlect iPhone app.",
+      "iosWifi": "With the FreeFlect iPhone app. Shares the screen, clipboard and files. Viewing only.",
+      "title": "How do you want to connect?",
+      "cableTitle": "USB cable",
+      "cable": "Recommended. The sharpest picture and the easiest setup.",
+      "wifi": "No cable. Needs Android 11 or later and the same Wi-Fi network."
+    },
+    "brand": {
+      "title": "Which brand is your phone?"
+    },
+    "open": "Open",
+    "then": "then",
+    "devOptions": {
+      "title": "Turn on Developer options",
+      "tap": "Tap <b>{item}</b> seven times, until it says you are now a developer.",
+      "help1": "Can't find {item}? Search for it with the search bar at the top of Settings.",
+      "help2": "Already see Developer options in Settings? Then this is done, press Continue.",
+      "help3": "Your phone may ask for your PIN or pattern after the taps. That is normal."
+    },
+    "usbDebugging": {
+      "title": "Turn on USB debugging",
+      "turnOn": "Turn on <b>USB debugging</b> and confirm.",
+      "also": "Also turn on <b>{name}</b>.",
+      "help1": "USB debugging is greyed out? Unplug the cable, turn it on, then plug in again.",
+      "help2": "Search Settings for USB debugging if Developer options is somewhere else on your phone."
+    },
+    "connect": {
+      "title": "Connect your phone with a USB cable",
+      "step1": "Unlock your phone.",
+      "step2": "Plug it into this computer. This page moves on by itself when the phone is found.",
+      "fileTransfer": "When the phone asks how to use USB, choose <b>File transfer</b>.",
+      "help1": "Some cables only charge. Try another cable, ideally the one that came with the phone.",
+      "help2": "Plug straight into the computer instead of a hub or adapter, or try another port.",
+      "help3": "If the phone asks how to use USB, choose File transfer."
+    },
+    "authorize": {
+      "title": "Tap Allow on your phone",
+      "step1": "Look for the Allow USB debugging prompt on your phone.",
+      "step2": "Tick <b>Always allow from this computer</b>, so you only do this once.",
+      "step3": "Tap <b>Allow</b>.",
+      "help1": "No prompt? Unlock the phone, then unplug and reconnect the cable.",
+      "help2": "Still nothing? In Developer options, tap Revoke USB debugging authorizations, then reconnect."
+    },
+    "wifiPair": {
+      "title": "Pair your phone over Wi-Fi",
+      "body": "Keep your phone and this computer on the same Wi-Fi network.",
+      "help1": "Wireless debugging turns off when your phone changes networks. Turn it on again.",
+      "help2": "Pairing keeps failing? Connect with a USB cable once and use Switch to Wi-Fi instead."
+    },
+    "iosCable": {
+      "title": "Connect your iPhone with a cable",
+      "waiting": "Plug in the iPhone and unlock it.",
+      "step1": "Unlock your iPhone and plug it into this computer.",
+      "step2": "When the iPhone asks to trust this computer, tap <b>Trust</b> and enter your passcode.",
+      "step3": "Keep the iPhone unlocked. This page moves on by itself when the screen is found.",
+      "help1": "Nothing happens? Unlock the iPhone. Its screen only appears to the computer while it is unlocked.",
+      "help2": "No Trust prompt? Unplug the cable, unlock the iPhone and plug it in again.",
+      "help3": "Tapped Don't Trust by mistake? On the iPhone, open Settings, General, Transfer or Reset iPhone, Reset, Reset Location & Privacy, then reconnect.",
+      "help4": "macOS may ask to let FreeFlect use the camera and the microphone. The iPhone's screen and sound count as those, so allow both."
+    },
+    "iosApp": {
+      "title": "Install the FreeFlect app on your iPhone",
+      "body": "Connect the iPhone with a cable for this step. This computer builds the app with your own Apple ID or provisioning profile and installs it. Already installed? Press Continue.",
+      "help1": "No teams listed? Open Xcode, Settings, Accounts, and add your Apple ID. A free Apple ID works.",
+      "help2": "Developer Mode is off? On the iPhone, open Settings, Privacy & Security, Developer Mode, and turn it on. The iPhone restarts.",
+      "help3": "The app says it is from an untrusted developer? Open Settings, General, VPN & Device Management, tap the developer, then Trust.",
+      "help4": "With a free Apple ID the app stops opening after 7 days. Install it again from here."
+    },
+    "iosAllow": {
+      "title": "Let the iPhone find this computer",
+      "allowed": "iPhone allowed",
+      "waiting": "Waiting for you to allow the iPhone on this computer. Allowed it before? Press Continue.",
+      "step1": "In the FreeFlect app, allow it to find devices on your local network.",
+      "step2": "This computer asks whether to allow the iPhone. Click <b>Allow</b>.",
+      "step3": "The app then says it is connected.",
+      "help1": "Keep the iPhone and this computer on the same Wi-Fi network. Guest and office networks sometimes block devices from seeing each other.",
+      "help2": "Turned off Local Network by mistake? On the iPhone, open Settings, Privacy & Security, Local Network, and turn on FreeFlect.",
+      "help3": "Check that the iPhone app is allowed in this computer's Settings, under FreeFlect iPhone app."
+    },
+    "iosBroadcast": {
+      "title": "Share the iPhone's screen",
+      "waiting": "Waiting for the iPhone to start sharing.",
+      "step1": "In the FreeFlect app, tap the round <b>broadcast</b> button. Or open Control Center and touch and hold <b>Screen Recording</b>.",
+      "step2": "Choose <b>FreeFlect</b>, then tap <b>Start Broadcast</b>.",
+      "help1": "FreeFlect is missing from the list? Close and reopen the FreeFlect app, then try again.",
+      "help2": "The broadcast stops right away? Check that the app says connected first.",
+      "help3": "To stop sharing, tap the red status bar at the top of the iPhone, then Stop."
+    },
+    "back": "Back",
+    "continue": "Continue",
+    "waiting": "Waiting for your phone",
+    "progress": "Setup progress",
+    "trouble": "Having trouble?",
+    "live": {
+      "connected": "Phone connected",
+      "found": "Phone found",
+      "foundBody": "Waiting for you to tap Allow on the phone.",
+      "none": "No phone detected yet",
+      "noneUsb": "You can plug in your phone at any time.",
+      "noneWifi": "Your phone will appear after pairing."
+    },
+    "done": {
+      "ready": "{name} is ready",
+      "android": "Android {version}.",
+      "nextTime": "Next time it connects by itself.",
+      "start": "Start mirroring",
+      "goodToKnow": "Good to know",
+      "tip1": "Click to tap and drag to swipe. Right click goes back.",
+      "tip2": "Type on your keyboard to type on the phone. Cmd or Ctrl+V pastes from this computer.",
+      "tip3": "Drop files on the phone to send them. APK files are installed."
+    },
+    "iosStatus": {
+      "none": "No iPhone yet"
+    },
+    "iosDone": {
+      "nextCable": "Next time, plug it in and unlock it.",
+      "nextWifi": "Next time, open the FreeFlect app and start the broadcast.",
+      "cable1": "The iPhone's sound plays on this computer while mirroring. Turn it off with the speaker button.",
+      "cable2": "The folder button shows the iPhone's photos and videos. Drag them out to save them.",
+      "cable3": "Controlling the iPhone from here is a developer feature. It needs Developer Mode on the iPhone and Appium's WebDriverAgent on this Mac.",
+      "wifi1": "Over Wi-Fi the iPhone is view only. Controlling an iPhone needs a cable connection.",
+      "wifi2": "Drop files on the iPhone to send them to the FreeFlect app.",
+      "wifi3": "Use FreeFlect in the iPhone's share sheet to send photos, links and text here."
+    }
+  },
+  "shortcuts": {
+    "action": {
+      "home": "Home",
+      "back": "Back",
+      "recents": "Recent apps",
+      "notifications": "Notifications",
+      "quickSettings": "Quick settings",
+      "volumeUp": "Volume up",
+      "volumeDown": "Volume down",
+      "power": "Power button",
+      "screenPower": "Phone screen off or on"
+    },
+    "title": "Keyboard shortcuts",
+    "body": "Work while the phone screen has focus.",
+    "needsModifier": "Include Option, Control or Command so normal typing still reaches the phone.",
+    "listening": "Press the new keys",
+    "none": "None",
+    "reset": "Reset to defaults"
+  },
+  "files": {
+    "place": {
+      "download": "Download",
+      "camera": "Camera",
+      "screenshots": "Screenshots",
+      "documents": "Documents"
+    },
+    "cantOpen": "This folder can't be opened. It may not exist on this phone, or Android keeps it private.",
+    "close": "Close files",
+    "path": "Folder path",
+    "storage": "Phone storage",
+    "openHint": "Double-click to open",
+    "confirmDelete": "Delete?",
+    "delete": "Delete",
+    "keep": "Keep",
+    "deleteFile": "Delete {name}",
+    "deleteHint": "Delete from the phone",
+    "empty": "This folder is empty. Drop files on the phone to add some."
+  },
+  "farm": {
+    "screenshotsSaved": {
+      "one": "Saved {count} screenshot",
+      "other": "Saved {count} screenshots"
+    },
+    "linkOpened": "Link opened on every phone",
+    "linkFailed": "Couldn't open the link",
+    "broadcastHint": "Taps, swipes and typing on any phone go to every phone",
+    "controllingAll": "Controlling all",
+    "controlAll": "Control all",
+    "backAll": "Back on all",
+    "homeAll": "Home on all",
+    "screenshotAll": "Screenshot all",
+    "installAll": "Install APK on all",
+    "linkLabel": "Link to open on every phone",
+    "openAll": "Open link on all",
+    "tileScreen": "{name} screen",
+    "connecting": "Connecting",
+    "openMain": "Open in the main view"
+  },
+  "devtools": {
+    "level": {
+      "verbose": "Verbose",
+      "debug": "Debug",
+      "info": "Info",
+      "warning": "Warning",
+      "error": "Error"
+    },
+    "tab": {
+      "logs": "Logs",
+      "apps": "Apps",
+      "device": "Device"
+    },
+    "close": "Close developer tools",
+    "searchLogs": "Search logs",
+    "searchPlaceholder": "Search, or /regex/",
+    "minLevel": "Minimum level",
+    "resumeLogs": "Resume logs",
+    "pauseLogs": "Pause logs",
+    "resume": "Resume",
+    "pause": "Pause",
+    "clearLogs": "Clear logs",
+    "clear": "Clear",
+    "saveLogs": "Save logs",
+    "saveLogsHint": "Save the shown lines",
+    "done": {
+      "launch": "Opened {pkg}",
+      "stop": "Stopped {pkg}",
+      "clear": "Cleared the data of {pkg}",
+      "uninstall": "Uninstalled {pkg}"
+    },
+    "searchApps": "Search apps",
+    "searchAppsPlaceholder": "Search installed apps",
+    "installApk": "Install APK",
+    "loadingApps": "Loading apps",
+    "noApps": "No apps you installed were found.",
+    "confirmClear": "Clear its data?",
+    "confirmUninstall": "Uninstall?",
+    "open": "Open",
+    "forceStop": "Force stop",
+    "clearData": "Clear data",
+    "uninstall": "Uninstall",
+    "cpu": "CPU",
+    "memory": "Memory used",
+    "memoryOf": "of {gb} GB",
+    "battery": "Battery",
+    "batteryTemp": "Battery temperature"
+  },
+  "wifi": {
+    "sameNetwork": "Your phone and this computer need to be on the same Wi-Fi network.",
+    "pluggedIn": "Already plugged in",
+    "switchHint": "Switch to Wi-Fi now, then unplug the cable. Works on any Android version.",
+    "switching": "Switching",
+    "switch": "Switch to Wi-Fi",
+    "qrTitle": "Pair with a QR code",
+    "qr1": "On your phone, open Settings, then Developer options.",
+    "qr2": "Turn on Wireless debugging and tap it.",
+    "qr3": "Tap Pair device with QR code and scan this code.",
+    "needsAndroid11": "Needs Android 11 or later.",
+    "qrAlt": "Pairing QR code",
+    "waitingScan": "Waiting for your phone to scan",
+    "pairing": "Pairing with your phone",
+    "connected": "Connected",
+    "codeTitle": "Use a pairing code instead",
+    "codeHint": "In Wireless debugging, tap Pair device with pairing code. Enter the IP address, port and code it shows.",
+    "address": "IP address and port",
+    "code": "Pairing code",
+    "pairingShort": "Pairing",
+    "pair": "Pair"
+  },
+  "doctor": {
+    "title": "Connection Doctor",
+    "body": "Checks each part of the connection and tells you what to fix.",
+    "fixAboveFirst": "Fix the problem above first",
+    "reportCopied": "Report copied",
+    "copyReport": "Copy report",
+    "checking": "Checking",
+    "runAgain": "Run again",
+    "startAdb": "Start it",
+    "openSetup": "Open setup guide",
+    "check": {
+      "adb": "Android connection service",
+      "device": "Looking for your phone",
+      "authorized": "Permission on your phone",
+      "network": "Wi-Fi network",
+      "brand": "Settings for your phone brand",
+      "stream": "Screen capture test"
+    }
+  },
+  "doctorMain": {
+    "adbOk": "Android connection service is running",
+    "adbFail": "Android connection service is not running",
+    "adbFailDetail": "{app} uses it to talk to Android phones. Start it and run the checks again.",
+    "noPhone": "No phone found",
+    "noPhoneDetail": "Use a cable that carries data, not only charging, and try another USB port. If the phone asks how to use USB, choose File transfer.",
+    "found": "Found {names}",
+    "waitingPhone": "Waiting for a phone",
+    "allowed": "This computer is allowed on your phone",
+    "notAllowed": "Your phone has not allowed this computer yet",
+    "notAllowedDetail": "Unlock your phone and tap Allow on the USB debugging prompt. If no prompt appears, unplug and reconnect the cable. In Developer options you can also tap Revoke USB debugging authorizations, then reconnect.",
+    "notResponding": "Your phone is not responding",
+    "notRespondingDetail": "Unplug the cable, unlock your phone and plug it back in.",
+    "notWifi": "Not connected over Wi-Fi",
+    "sameNetwork": "Phone and computer are on the same network",
+    "differentNetworks": "Phone and computer seem to be on different networks",
+    "differentNetworksDetail": "Your phone is at {phone}, this computer at {computer}. Connect both to the same Wi-Fi.",
+    "noNetwork": "no network",
+    "noDetails": "Could not read phone details",
+    "xiaomi": "Xiaomi phones also need USB debugging (Security settings) turned on in Developer options, or taps and typing will not reach the phone.",
+    "oppo": "If taps do not work, turn on Disable permission monitoring in Developer options.",
+    "brandOk": "No extra settings needed for this brand.",
+    "running": "Mirroring is running",
+    "captureOk": "Screen capture works",
+    "captureFail": "Screen capture did not start",
+    "captureFailDetail": "Unlock your phone and keep it on, then run the checks again."
+  },
+  "menu": {
+    "settingsEllipsis": "Settings…",
+    "settings": "Settings",
+    "checkUpdates": "Check for Updates…",
+    "file": "File",
+    "edit": "Edit",
+    "device": "Device",
+    "saveScreenshot": "Save Screenshot",
+    "copyScreenshot": "Copy Screenshot",
+    "toggleRecording": "Start or Stop Recording",
+    "deviceWindow": "Device Window",
+    "view": "View",
+    "streamStats": "Stream Stats",
+    "shortcuts": "Keyboard Shortcuts",
+    "keepOnTop": "Keep Window on Top",
+    "window": "Window",
+    "help": "Help",
+    "setup": "Set Up a Phone"
+  },
+  "installerMain": {
+    "needsMac": "Installing the iPhone app needs a Mac with Xcode.",
+    "installXcode": "Install Xcode from the App Store, open it once, then try again.",
+    "addAppleId": "Add your Apple ID in Xcode (Settings, Accounts), then try again.",
+    "developerMode": "Turn on Developer Mode on the iPhone: Settings, Privacy & Security, Developer Mode. The iPhone restarts.",
+    "unlock": "Unlock the iPhone and try again.",
+    "appLimit": "Free Apple accounts can register a limited number of apps each week. Try again later or pick another team.",
+    "trust": "Unlock the iPhone, tap Trust when it asks about this computer, and try again.",
+    "storage": "The iPhone is out of storage. Free up some space and try again.",
+    "unreachable": "Xcode can not reach the iPhone. Connect it with a cable, unlock it and try again.",
+    "buildFailed": "The build failed. Open the details for the full log.",
+    "teamGone": "That team is no longer in Xcode. Check Xcode, Settings, Accounts.",
+    "building": "Building with {team}",
+    "compiling": "Compiling",
+    "signing": "Signing",
+    "profile": "Getting a signing profile from Apple",
+    "installing": "Installing on {device}",
+    "opening": "Opening the app on the iPhone",
+    "cancelled": "Cancelled.",
+    "profileGone": "That provisioning profile is no longer installed. Press Refresh.",
+    "profileExpired": "The profile \"{name}\" has expired. Create a new one on developer.apple.com.",
+    "profileNoDevice": "The profile \"{name}\" doesn't include this iPhone. Add the iPhone to the profile on developer.apple.com, then download it again.",
+    "profileNoDeviceShort": "The provisioning profile doesn't include this iPhone. Add the iPhone to the profile and download it again.",
+    "profileMissing": "Also needed: profiles for {ids}. Create them on developer.apple.com (or use a wildcard profile), install them, then press Refresh.",
+    "noCertificate": "The signing certificate for this profile isn't in your keychain. Install it (from developer.apple.com or the person who made the profile) and try again.",
+    "idTaken": "com.freeflect.ios belongs to another developer's team, so this team uses {id}. Building again."
+  },
+  "iosControlMain": {
+    "notFound": "WebDriverAgent was not found. Build it once with Appium (appium driver run xcuitest build-wda).",
+    "timeout": "WebDriverAgent did not start in time. Unlock the iPhone and try again.",
+    "failed": "WebDriverAgent failed to start. It may need to be signed again in Xcode.",
+    "failedReason": "WebDriverAgent failed to start: {reason}",
+    "stoppedStarting": "WebDriverAgent stopped while starting.",
+    "stopped": "WebDriverAgent stopped on the iPhone. Turn developer control on again."
+  },
+  "iosDevices": {
+    "purpose": {
+      "browse": "browse its photos",
+      "copy": "copy its photos",
+      "control": "control it"
+    },
+    "needsCable": "Connect the iPhone with a cable to {purpose}.",
+    "needsCableUnlock": "Connect the iPhone with a cable and unlock it to {purpose}.",
+    "sameName": "Several connected iPhones are called \"{name}\". Give each one its own name in Settings, General, About, Name.",
+    "notFound": "Can't tell which connected iPhone this is. Unplug the other iPhones and try again."
+  },
+  "wifiMain": {
+    "expired": "The code expired. Close this and try again.",
+    "noConnect": "Paired, but the phone did not connect. Keep Wireless debugging open and try again."
+  }
+}

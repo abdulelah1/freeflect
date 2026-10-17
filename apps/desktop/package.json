@@ -1,0 +1,48 @@
+{
+  "name": "@mirror/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
+    "dist": "electron-vite build && electron-builder --mac --publish never"
+  },
+  "devDependencies": {
+    "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/geist-mono": "5.3.0",
+    "@mirror/native": "workspace:*",
+    "@phosphor-icons/react": "2.1.10",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "^22",
+    "@types/qrcode": "1.5.6",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "44.7.1",
+    "electron-builder": "26.16.1",
+    "electron-vite": "5.0.0",
+    "gifenc": "1.0.3",
+    "qrcode": "1.5.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "simple-icons": "16.33.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "vitest": "4.0.0"
+  },
+  "productName": "FreeFlect",
+  "description": "See and control your phone on your computer.",
+  "mirror": {
+    "releasesRepo": "abdulelah1/freeflect"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abdulelah1/freeflect.git"
+  }
+}

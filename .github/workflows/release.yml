@@ -1,0 +1,61 @@
+# Builds the macOS DMGs and attaches them to a draft GitHub Release.
+# Push a tag like v0.2.0 (matching apps/desktop/package.json "version"),
+# then review the draft release and publish it. See docs/release.md.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15        # Apple Silicon (arm64)
+          - runner: macos-15-intel  # Intel (x64)
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag matches the app version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version=$(node -p "require('./apps/desktop/package.json').version")
+          [ "v$version" = "${GITHUB_REF_NAME}" ] || { echo "Tag ${GITHUB_REF_NAME} does not match version $version"; exit 1; }
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Android platform and build tools (for the phone server)
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" "platform-tools" > /dev/null
+
+      - name: XcodeGen (generates the iPhone app project shipped in the DMG)
+        run: brew install xcodegen
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build the DMG
+        run: pnpm release:mac
+        env:
+          ANDROID_BUILD_TOOLS: 36.0.0
+          # Ad hoc signing; never pick up a certificate by accident.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: release/dist/*.dmg

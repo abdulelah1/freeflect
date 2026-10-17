@@ -1,0 +1,25 @@
+[workspace]
+resolver = "3"
+members = ["crates/core", "crates/media", "crates/android", "crates/ios", "crates/companion", "crates/node-bindings"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "UNLICENSED"
+publish = false
+
+[workspace.dependencies]
+mirror-core = { path = "crates/core" }
+mirror-media = { path = "crates/media" }
+mirror-android = { path = "crates/android" }
+mirror-ios = { path = "crates/ios" }
+mirror-companion = { path = "crates/companion" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "io-util", "sync", "time", "fs"] }
+async-trait = "0.1"
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+
+[profile.release]
+lto = "thin"

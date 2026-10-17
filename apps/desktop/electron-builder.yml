@@ -1,0 +1,62 @@
+# macOS DMG for GitHub Releases (not the Mac App Store).
+# Run `pnpm release:mac` from the repo root: it builds every part, prepares
+# release/staging, then packages. Signing is ad hoc unless a Developer ID
+# certificate is provided (CSC_LINK / CSC_NAME), see docs/release.md.
+appId: app.freeflect.desktop
+productName: FreeFlect
+artifactName: FreeFlect-${version}-${arch}.${ext}
+copyright: FreeFlect
+directories:
+  # scripts/package-mac.sh overrides this with a folder outside ~/Desktop.
+  output: ../../release/dist
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+asar: true
+# Everything native lives in Resources, outside the asar archive.
+extraResources:
+  - from: ../../release/staging/mirror-server.jar
+    to: mirror-server.jar
+  - from: ../../release/staging/ios-capture
+    to: ios-capture
+  - from: ../../release/staging/native
+    to: native
+  - from: ../../release/staging/platform-tools
+    to: platform-tools
+  - from: ../../release/staging/companion
+    to: companion
+mac:
+  target:
+    - target: dmg
+  category: public.app-category.utilities
+  icon: build/icon.icns
+  minimumSystemVersion: "13.0"
+  # "-" signs ad hoc (runs on Apple Silicon); a Developer ID identity, when
+  # configured, replaces it and enables notarization.
+  identity: "-"
+  hardenedRuntime: false
+  extendInfo:
+    NSCameraUsageDescription: FreeFlect shows your iPhone's screen, which macOS treats as a camera.
+    NSMicrophoneUsageDescription: FreeFlect plays your iPhone's sound, which macOS treats as a microphone.
+    NSLocalNetworkUsageDescription: FreeFlect finds phones on your Wi-Fi to mirror them and to receive files from the FreeFlect iPhone app.
+    NSBonjourServices:
+      - _mirror-desk._tcp
+      - _adb-tls-connect._tcp
+      - _adb-tls-pairing._tcp
+dmg:
+  title: FreeFlect ${version}
+  # Brand background (1x + 2x in one TIFF); icons sit where its artwork expects them.
+  background: build/background.tiff
+  iconSize: 128
+  contents:
+    - x: 140
+      y: 190
+    - x: 400
+      y: 190
+      type: link
+      path: /Applications
+  window:
+    width: 540
+    height: 380
+publish: null

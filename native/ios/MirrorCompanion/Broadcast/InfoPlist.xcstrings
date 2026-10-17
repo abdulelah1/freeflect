@@ -1,0 +1,28 @@
+{
+  "sourceLanguage": "en",
+  "version": "1.0",
+  "strings": {
+    "CFBundleDisplayName": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فريفلكت"
+          }
+        }
+      },
+      "extractionState": "manual"
+    },
+    "NSLocalNetworkUsageDescription": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يرسل فريفلكت شاشتك إلى الكمبيوتر على شبكة الواي فاي هذه."
+          }
+        }
+      },
+      "extractionState": "manual"
+    }
+  }
+}
