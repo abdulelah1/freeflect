@@ -4,11 +4,12 @@
 # there, and code signing refuses them. The DMG is copied to release/dist.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WORK="${MIRROR_PACKAGE_DIR:-$HOME/Library/Caches/mirror-release}"
+ARCH="${ARCH:-$(uname -m | sed s/x86_64/x64/)}"
+WORK="${MIRROR_PACKAGE_DIR:-$HOME/Library/Caches/mirror-release}/$ARCH"
 rm -rf "$WORK" && mkdir -p "$WORK" "$ROOT/release/dist"
 cd "$ROOT/apps/desktop"
 npx electron-vite build
 CSC_IDENTITY_AUTO_DISCOVERY="${CSC_IDENTITY_AUTO_DISCOVERY:-false}" \
-  npx electron-builder --mac --publish never -c.directories.output="$WORK"
+  npx electron-builder --mac "--$ARCH" --publish never -c.directories.output="$WORK"
 cp "$WORK"/*.dmg "$ROOT/release/dist/"
 ls -lh "$ROOT/release/dist/"*.dmg

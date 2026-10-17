@@ -25,10 +25,12 @@ While it is empty, the update check stays off.
 
 ```sh
 source ~/.cargo/env
-pnpm release:mac        # release/dist/FreeFlect-<version>-<arch>.dmg
+pnpm release:mac        # this Mac's architecture: release/dist/FreeFlect-<version>-<arch>.dmg
+pnpm release:mac:intel  # Intel (x64) DMG, also on Apple Silicon
+pnpm release:mac:all    # both
 ```
 
-Needs Rust, Node 20 and pnpm, Xcode, XcodeGen (`brew install xcodegen`), a JDK and
+Needs Rust (plus `rustup target add x86_64-apple-darwin` for Intel), Node 20 and pnpm, Xcode, XcodeGen (`brew install xcodegen`), a JDK and
 the Android SDK (platform 36 and build tools). `scripts/prepare-release.sh`
 builds every part and stages it in `release/staging`:
 
