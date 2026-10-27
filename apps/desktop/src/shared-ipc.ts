@@ -222,7 +222,32 @@ export interface RecordingResult {
   error?: string
 }
 
-export type DoctorCheckId = 'adb' | 'device' | 'authorized' | 'network' | 'brand' | 'stream'
+export type DoctorCheckId =
+  | 'adb'
+  | 'device'
+  | 'authorized'
+  | 'network'
+  | 'brand'
+  | 'stream'
+  // iPhone over a cable (macOS screen capture)
+  | 'iosCable'
+  | 'iosPermission'
+  | 'iosCapture'
+  // iPhone over Wi-Fi (the FreeFlect iPhone app)
+  | 'iosLan'
+  | 'iosPaired'
+  | 'iosListening'
+  | 'iosLink'
+
+/** One-click fixes. `pair-iphone` and `open-setup` happen in the window; the rest in the main process. */
+export type DoctorFix =
+  | 'start-adb'
+  | 'open-setup'
+  | 'pair-iphone'
+  | 'ask-media'
+  | 'open-camera-settings'
+  | 'open-microphone-settings'
+  | 'open-firewall-settings'
 
 export interface DoctorResult {
   id: DoctorCheckId
@@ -230,7 +255,7 @@ export interface DoctorResult {
   title: string
   detail?: string
   /** One-click fix the UI can offer. */
-  fix?: 'start-adb' | 'open-setup'
+  fix?: DoctorFix
   /** Technical detail for the diagnostic report. */
   raw?: string
 }
@@ -402,6 +427,8 @@ export interface MirrorApi {
   deviceProps(serial: string): Promise<DeviceProps>
   runDoctorCheck(id: DoctorCheckId, serial: string | null): Promise<DoctorResult>
   startAdb(): Promise<void>
+  /** Applies a fix the main process owns (permissions, System Settings). */
+  applyDoctorFix(fix: DoctorFix): Promise<void>
   appInfo(): Promise<AppInfo>
   writeClipboardText(text: string): Promise<void>
 

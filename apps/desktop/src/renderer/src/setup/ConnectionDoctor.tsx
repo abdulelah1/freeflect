@@ -9,59 +9,92 @@ import {
   XIcon
 } from '@phosphor-icons/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DoctorCheckId, DoctorResult } from '../../../shared-ipc'
+import { isIosSerial, type DoctorCheckId, type DoctorFix, type DoctorResult } from '../../../shared-ipc'
+import { BrandLogo } from '../components/BrandLogo'
+import { CompanionPairing } from '../components/CompanionPairing'
 import { t, useT } from '../i18n'
 
-/** Order matters: later checks only make sense once earlier ones pass. */
-const CHECKS: DoctorCheckId[] = ['adb', 'device', 'authorized', 'network', 'brand', 'stream']
-/** A failure here makes the remaining checks meaningless. */
-const BLOCKING: DoctorCheckId[] = ['adb', 'device', 'authorized']
+type Platform = 'android' | 'ios'
+
+/**
+ * Checks run in order within a group: later ones only make sense once earlier
+ * ones pass, so a failure in `blocking` skips the rest of its group.
+ */
+interface Group {
+  /** Locale key of the section heading. */
+  title?: string
+  checks: DoctorCheckId[]
+  blocking: DoctorCheckId[]
+}
+
+const GROUPS: Record<Platform, Group[]> = {
+  android: [{ checks: ['adb', 'device', 'authorized', 'network', 'brand', 'stream'], blocking: ['adb', 'device', 'authorized'] }],
+  // A cable and Wi-Fi are independent ways in: a problem with one says nothing about the other.
+  ios: [
+    { title: 'doctor.group.cable', checks: ['iosCable', 'iosPermission', 'iosCapture'], blocking: ['iosCable', 'iosPermission'] },
+    { title: 'doctor.group.wifi', checks: ['iosLan', 'iosPaired', 'iosListening', 'iosLink'], blocking: ['iosPaired', 'iosListening'] }
+  ]
+}
+
+const checksOf = (platform: Platform) => GROUPS[platform].flatMap((g) => g.checks)
 
 type Row = { state: 'pending' | 'running' } | { state: 'done'; result: DoctorResult }
 
 interface Props {
   /** The phone to diagnose; the first ready phone is used when null. */
   serial: string | null
+  /** Which kind of phone to start with; the user can switch. */
+  initialPlatform: Platform
   onClose(): void
   onOpenSetup(): void
 }
 
-export function ConnectionDoctor({ serial, onClose, onOpenSetup }: Props) {
-  const [rows, setRows] = useState<Record<DoctorCheckId, Row>>(() => initialRows())
+export function ConnectionDoctor({ serial, initialPlatform, onClose, onOpenSetup }: Props) {
+  const [platform, setPlatform] = useState<Platform>(initialPlatform)
+  const [rows, setRows] = useState<Partial<Record<DoctorCheckId, Row>>>(() => initialRows(initialPlatform))
   const [running, setRunning] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [target, setTarget] = useState<string | null>(serial)
+  const [pairing, setPairing] = useState(false)
+  // A phone of the other kind isn't diagnosed by these checks.
+  const ownSerial = (p: Platform) => (serial && isIosSerial(serial) === (p === 'ios') ? serial : null)
+  const [target, setTarget] = useState<string | null>(ownSerial(initialPlatform))
   const runId = useRef(0)
   const dialogRef = useRef<HTMLDivElement>(null)
 
   const runAll = useCallback(async () => {
     const id = ++runId.current
     setRunning(true)
-    setRows(initialRows())
-    let device = serial
-    let blocked: DoctorResult | null = null
-    for (const check of CHECKS) {
-      if (runId.current !== id) return
-      if (blocked) {
-        setRows((r) => ({
-          ...r,
-          [check]: { state: 'done', result: { id: check, status: 'skip', title: t('doctor.fixAboveFirst') } }
-        }))
-        continue
+    setRows(initialRows(platform))
+    let device = serial && isIosSerial(serial) === (platform === 'ios') ? serial : null
+    setTarget(device)
+    for (const group of GROUPS[platform]) {
+      /** Why the rest of the group is skipped, once something above stops it. */
+      let blocked: string | null = null
+      for (const check of group.checks) {
+        if (runId.current !== id) return
+        if (blocked) {
+          setRows((r) => ({
+            ...r,
+            [check]: { state: 'done', result: { id: check, status: 'skip', title: blocked! } }
+          }))
+          continue
+        }
+        setRows((r) => ({ ...r, [check]: { state: 'running' } }))
+        if (check === 'authorized' && !device) {
+          const ready = (await window.mirror.listAndroidDevices().catch(() => [])).find((d) => d.state === 'device')
+          device = ready?.serial ?? null
+          setTarget(device)
+        }
+        const result = await window.mirror.runDoctorCheck(check, device)
+        if (runId.current !== id) return
+        setRows((r) => ({ ...r, [check]: { state: 'done', result } }))
+        if (result.status === 'fail' && group.blocking.includes(check)) blocked = t('doctor.fixAboveFirst')
+        // No iPhone on the cable is fine over Wi-Fi; the cable checks just have nothing to test.
+        if (check === 'iosCable' && result.status === 'warn') blocked = t('doctorMain.ios.noCableSkip')
       }
-      setRows((r) => ({ ...r, [check]: { state: 'running' } }))
-      if (check === 'authorized' && !device) {
-        const ready = (await window.mirror.listAndroidDevices().catch(() => [])).find((d) => d.state === 'device')
-        device = ready?.serial ?? null
-        setTarget(device)
-      }
-      const result = await window.mirror.runDoctorCheck(check, device)
-      if (runId.current !== id) return
-      setRows((r) => ({ ...r, [check]: { state: 'done', result } }))
-      if (result.status === 'fail' && BLOCKING.includes(check)) blocked = result
     }
     setRunning(false)
-  }, [serial])
+  }, [serial, platform])
 
   useEffect(() => {
     dialogRef.current?.focus()
@@ -71,17 +104,23 @@ export function ConnectionDoctor({ serial, onClose, onOpenSetup }: Props) {
     }
   }, [runAll])
 
-  const applyFix = async (fix: DoctorResult['fix']) => {
+  const applyFix = async (fix: DoctorFix) => {
     if (fix === 'start-adb') {
       await window.mirror.startAdb().catch(() => undefined)
       void runAll()
     } else if (fix === 'open-setup') {
       onOpenSetup()
+    } else if (fix === 'pair-iphone') {
+      setPairing(true)
+    } else {
+      await window.mirror.applyDoctorFix(fix).catch(() => undefined)
+      // macOS answers a permission prompt right away; System Settings changes come back with Run again.
+      if (fix === 'ask-media') void runAll()
     }
   }
 
   const copyReport = async () => {
-    await window.mirror.writeClipboardText(await buildReport(rows, target))
+    await window.mirror.writeClipboardText(await buildReport(platform, rows, target))
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
@@ -98,6 +137,14 @@ export function ConnectionDoctor({ serial, onClose, onOpenSetup }: Props) {
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
         className="flex max-h-full w-full max-w-[600px] flex-col rounded-[var(--radius-panel)] border border-line bg-surface outline-none"
       >
+        {pairing && (
+          <CompanionPairing
+            onClose={() => {
+              setPairing(false)
+              void runAll()
+            }}
+          />
+        )}
         <div className="flex items-start justify-between gap-4 p-6 pb-4">
           <div className="flex items-start gap-3">
             <StethoscopeIcon size={22} className="mt-0.5 text-accent" />
@@ -113,11 +160,37 @@ export function ConnectionDoctor({ serial, onClose, onOpenSetup }: Props) {
           </button>
         </div>
 
-        <ol aria-live="polite" className="grid min-h-0 gap-1 overflow-y-auto px-4">
-          {CHECKS.map((id) => (
-            <CheckRow key={id} row={rows[id]} pending={t(`doctor.check.${id}`)} onFix={(f) => void applyFix(f)} />
+        <div role="radiogroup" aria-label={t('wifi.whichPhone')} className="mx-6 mb-3 inline-flex self-start rounded-[var(--radius-control)] border border-line p-0.5">
+          {(['android', 'ios'] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              role="radio"
+              aria-checked={platform === p}
+              disabled={running && platform !== p}
+              onClick={() => setPlatform(p)}
+              className={`inline-flex items-center gap-2 rounded-[calc(var(--radius-control)-2px)] px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
+                platform === p ? 'bg-fg/10 text-fg' : 'text-muted hover:text-fg'
+              }`}
+            >
+              <BrandLogo brand={p === 'ios' ? 'apple' : 'android'} size={14} />
+              {p === 'ios' ? t('common.iphone') : t('wifi.android')}
+            </button>
           ))}
-        </ol>
+        </div>
+
+        <div aria-live="polite" className="grid min-h-0 gap-3 overflow-y-auto px-4">
+          {GROUPS[platform].map((group) => (
+            <section key={group.checks[0]}>
+              {group.title && <h3 className="px-2 pb-1 pt-1 text-xs font-medium text-muted">{t(group.title)}</h3>}
+              <ol className="grid gap-1">
+                {group.checks.map((id) => (
+                  <CheckRow key={id} row={rows[id] ?? { state: 'pending' }} pending={t(`doctor.check.${id}`)} onFix={(f) => void applyFix(f)} />
+                ))}
+              </ol>
+            </section>
+          ))}
+        </div>
 
         <div className="mt-4 flex items-center justify-between gap-3 border-t border-line px-6 py-4">
           <button
@@ -144,7 +217,7 @@ export function ConnectionDoctor({ serial, onClose, onOpenSetup }: Props) {
   )
 }
 
-function CheckRow({ row, pending, onFix }: { row: Row; pending: string; onFix(fix: DoctorResult['fix']): void }) {
+function CheckRow({ row, pending, onFix }: { row: Row; pending: string; onFix(fix: DoctorFix): void }) {
   const t = useT()
   if (row.state !== 'done') {
     return (
@@ -176,10 +249,10 @@ function CheckRow({ row, pending, onFix }: { row: Row; pending: string; onFix(fi
         {result.fix && (
           <button
             type="button"
-            onClick={() => onFix(result.fix)}
+            onClick={() => onFix(result.fix!)}
             className="mt-2 rounded-[var(--radius-control)] border border-line bg-bg px-2.5 py-1 text-xs font-medium hover:bg-fg/5 active:scale-[0.98]"
           >
-            {result.fix === 'start-adb' ? t('doctor.startAdb') : t('doctor.openSetup')}
+            {t(`doctor.fix.${result.fix}`)}
           </button>
         )}
       </div>
@@ -187,28 +260,33 @@ function CheckRow({ row, pending, onFix }: { row: Row; pending: string; onFix(fi
   )
 }
 
-function initialRows(): Record<DoctorCheckId, Row> {
-  return Object.fromEntries(CHECKS.map((id) => [id, { state: 'pending' }])) as Record<DoctorCheckId, Row>
+function initialRows(platform: Platform): Partial<Record<DoctorCheckId, Row>> {
+  return Object.fromEntries(checksOf(platform).map((id) => [id, { state: 'pending' }]))
 }
 
 /** Plain-text report for support. The serial is shortened to avoid sharing it in full. */
-async function buildReport(rows: Record<DoctorCheckId, Row>, serial: string | null): Promise<string> {
+async function buildReport(platform: Platform, rows: Partial<Record<DoctorCheckId, Row>>, serial: string | null): Promise<string> {
   const info = await window.mirror.appInfo()
-  const props = serial ? await window.mirror.deviceProps(serial).catch(() => null) : null
+  const props = serial && platform === 'android' ? await window.mirror.deviceProps(serial).catch(() => null) : null
+  const iphones = platform === 'ios' ? await window.mirror.listIosDevices().catch(() => []) : []
+  const phone =
+    platform === 'ios'
+      ? `iPhone: ${iphones.map((d) => `${d.model ?? 'iPhone'} (${d.transport === 'usb' ? 'cable' : 'Wi-Fi'})`).join(', ') || 'none connected'}`
+      : props
+        ? `Phone: ${props.manufacturer} ${props.model}, Android ${props.androidVersion} (SDK ${props.sdk}), serial ${serial!.slice(0, 4)}****`
+        : 'Phone: none detected'
   const lines = [
     'FreeFlect diagnostic report',
     `Generated: ${new Date().toISOString()}`,
-    `App ${info.version} (native ${info.nativeVersion}, Electron ${info.electron}) on ${info.platform}`,
-    `adb: ${info.adbPath}`,
-    props
-      ? `Phone: ${props.manufacturer} ${props.model}, Android ${props.androidVersion} (SDK ${props.sdk}), serial ${serial!.slice(0, 4)}****`
-      : 'Phone: none detected',
+    `App ${info.version} (native ${info.nativeVersion}, Electron ${info.electron}) on ${info.platform}${info.packaged ? '' : ', development run'}`,
+    platform === 'android' ? `adb: ${info.adbPath}` : 'Checked: iPhone',
+    phone,
     '',
     'Checks:'
   ]
-  for (const id of CHECKS) {
+  for (const id of checksOf(platform)) {
     const row = rows[id]
-    if (row.state !== 'done') {
+    if (!row || row.state !== 'done') {
       lines.push(`[not run] ${id}`)
       continue
     }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { isIosSerial, QUALITY_PRESETS, type AndroidDevice, type QualityPreset, type UpdateInfo } from '../../shared-ipc'
+import { isCompanionSerial, isIosSerial, QUALITY_PRESETS, type AndroidDevice, type QualityPreset, type UpdateInfo } from '../../shared-ipc'
 import { HudStrip } from './components/HudStrip'
 import { Sidebar, type Selection } from './components/Sidebar'
 import { Stage, type Phase } from './components/Stage'
@@ -127,6 +127,8 @@ export function App() {
   const [screenOff, setScreenOff] = useState(false)
   const [setupOpen, setSetupOpen] = useState(false)
   const [doctorOpen, setDoctorOpen] = useState(false)
+  /** Set when the Doctor is opened for a known kind of phone (from the setup guide). */
+  const [doctorPlatform, setDoctorPlatform] = useState<'android' | 'ios' | null>(null)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   // One side panel at a time.
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -571,7 +573,8 @@ export function App() {
   const onWifiConnected = useCallback(
     (serial: string) => {
       setWifiOpen(false)
-      showToast({ id: 'wifi', tone: 'success', title: t('toast.wifiConnected'), body: t('toast.wifiConnectedBody') })
+      const body = isCompanionSerial(serial) ? t('toast.iphoneWifiBody') : t('toast.wifiConnectedBody')
+      showToast({ id: 'wifi', tone: 'success', title: t('toast.wifiConnected'), body })
       void refreshDevices().then(() => void select({ kind: 'android', serial }))
     },
     [refreshDevices, select, showToast]
@@ -676,15 +679,32 @@ export function App() {
             setSetupOpen(false)
             void refreshDevices().then(() => void select({ kind: 'android', serial }))
           }}
-          onOpenDoctor={() => setDoctorOpen(true)}
+          onOpenDoctor={(platform) => {
+            setDoctorPlatform(platform)
+            setDoctorOpen(true)
+          }}
         />
       )}
       {doctorOpen && (
         <ConnectionDoctor
           serial={selection?.kind === 'android' ? selection.serial : null}
-          onClose={() => setDoctorOpen(false)}
+          initialPlatform={
+            doctorPlatform ??
+            (selection?.kind === 'android'
+              ? isIosSerial(selection.serial)
+                ? 'ios'
+                : 'android'
+              : (devices ?? []).length > 0 && (devices ?? []).every((d) => d.platform === 'ios')
+                ? 'ios'
+                : 'android')
+          }
+          onClose={() => {
+            setDoctorOpen(false)
+            setDoctorPlatform(null)
+          }}
           onOpenSetup={() => {
             setDoctorOpen(false)
+            setDoctorPlatform(null)
             setSetupOpen(true)
           }}
         />
@@ -696,6 +716,8 @@ export function App() {
       {wifiOpen && (
         <WifiDialog
           usbDevices={(devices ?? []).filter((d) => d.transport === 'usb' && d.state === 'device')}
+          // iPhone first when the only phones around are iPhones.
+          initialPlatform={(devices ?? []).length > 0 && (devices ?? []).every((d) => d.platform === 'ios') ? 'ios' : 'android'}
           onClose={() => setWifiOpen(false)}
           onConnected={onWifiConnected}
         />

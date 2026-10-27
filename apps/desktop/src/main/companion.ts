@@ -24,6 +24,8 @@ let server: Server | null = null
 const screens = new Map<string, string>()
 /** Phones with the app open (can receive clipboard and files). */
 const controls = new Map<string, string>()
+/** When each paired phone last had a connection open (ms), for the Connection Doctor. */
+const lastSeen = new Map<string, number>()
 /** Receives each phone's video and audio packets while a window shows it. */
 const videoSinks = new Map<string, (packet: unknown) => void>()
 const audioSinks = new Map<string, (packet: { config: boolean }) => void>()
@@ -161,17 +163,21 @@ async function startNativeServer(): Promise<Server> {
           syncServer()
           break
         case 'screen-started':
+          lastSeen.set(e.deviceId, Date.now())
           screens.set(e.deviceId, e.name ?? 'iPhone')
           break
         case 'screen-stopped':
+          lastSeen.set(e.deviceId, Date.now())
           screens.delete(e.deviceId)
           audioConfigs.delete(e.deviceId)
           broadcast('mirror:closed', COMPANION_PREFIX + e.deviceId)
           break
         case 'control-connected':
+          lastSeen.set(e.deviceId, Date.now())
           controls.set(e.deviceId, e.name ?? 'iPhone')
           break
         case 'control-disconnected':
+          lastSeen.set(e.deviceId, Date.now())
           controls.delete(e.deviceId)
           break
         case 'clipboard':
@@ -246,3 +252,18 @@ export async function sendFileToCompanion(deviceId: string, path: string): Promi
 
 export const companionAppOpen = (deviceId: string) => controls.has(deviceId)
 
+/** The iPhone app link as the Connection Doctor sees it. */
+export function companionStatus() {
+  return {
+    allowed: settings().companionEnabled,
+    port: server?.port ?? null,
+    fingerprint: server?.fingerprint ?? null,
+    phones: paired.map(({ deviceId, name }) => ({
+      deviceId,
+      name,
+      sharingScreen: screens.has(deviceId),
+      appOpen: controls.has(deviceId),
+      lastSeen: lastSeen.get(deviceId) ?? null
+    }))
+  }
+}
