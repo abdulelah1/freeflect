@@ -2,7 +2,24 @@ import { CheckCircleIcon, DeviceMobileIcon, WarningCircleIcon } from '@phosphor-
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CompanionPairing as Pairing } from '../../../shared-ipc'
 import { useT } from '../i18n'
+import { declinedMessage, explainPermission } from './PermissionGate'
 import { cleanError } from './WifiPairPanel'
+
+const PAIRING_EXPLAINED_KEY = 'mirror.explained.pairing'
+const readExplained = () => {
+  try {
+    return localStorage.getItem(PAIRING_EXPLAINED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+const writeExplained = () => {
+  try {
+    localStorage.setItem(PAIRING_EXPLAINED_KEY, '1')
+  } catch {
+    // Explained again next time.
+  }
+}
 
 type Phase =
   | { kind: 'loading' }
@@ -23,14 +40,24 @@ export function CompanionPairPanel({ onPaired }: { onPaired?(phone: { deviceId: 
   // Read through a ref so a new callback doesn't restart pairing.
   const onPairedRef = useRef(onPaired)
   onPairedRef.current = onPaired
+  const mounted = useRef(true)
 
-  const start = useCallback(() => {
+  const start = useCallback(async () => {
     setPhase({ kind: 'loading' })
+    // Pairing makes this computer reachable on the network, which macOS asks
+    // about once: explain that first.
+    if (!readExplained()) {
+      const ok = await explainPermission('pairing')
+      // Closed meanwhile: don't open a pairing window nobody sees.
+      if (!mounted.current) return
+      if (!ok) return setPhase({ kind: 'closed', reason: t('permission.pairing.declined') })
+      writeExplained()
+    }
     window.mirror.startCompanionPairing().then(
       (pairing) => setPhase({ kind: 'open', pairing, deadline: Date.now() + pairing.expiresInSecs * 1000 }),
-      (e: unknown) => setPhase({ kind: 'closed', reason: cleanError(e) })
+      (e: unknown) => setPhase({ kind: 'closed', reason: declinedMessage(e) ?? cleanError(e) })
     )
-  }, [])
+  }, [t])
 
   useEffect(() => {
     const offPaired = window.mirror.onCompanionPaired((p) => {
@@ -40,8 +67,10 @@ export function CompanionPairPanel({ onPaired }: { onPaired?(phone: { deviceId: 
     const offClosed = window.mirror.onCompanionPairingClosed((reason) =>
       setPhase((p) => (p.kind === 'paired' || reason === 'paired' ? p : { kind: 'closed', reason }))
     )
-    start()
+    mounted.current = true
+    void start()
     return () => {
+      mounted.current = false
       offPaired()
       offClosed()
       void window.mirror.cancelCompanionPairing()
@@ -81,7 +110,7 @@ export function CompanionPairPanel({ onPaired }: { onPaired?(phone: { deviceId: 
         </p>
         <button
           type="button"
-          onClick={start}
+          onClick={() => void start()}
           className="justify-self-start rounded-[var(--radius-control)] border border-line px-4 py-2 text-sm font-medium hover:bg-fg/6 active:scale-[0.98]"
         >
           {t('pairing.again')}

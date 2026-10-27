@@ -21,6 +21,7 @@ import {
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { isCompanionSerial, isIosSerial, QUALITY_PRESETS, type KeyName, type QualityPreset } from '../../shared-ipc'
 import { useAudioPlayback } from './audio/useAudioPlayback'
+import { declinedMessage, withPermissions } from './components/PermissionGate'
 import { useIosControl } from './hooks/useIosControl'
 import { useT } from './i18n'
 import { useRecording } from './hooks/useRecording'
@@ -104,11 +105,12 @@ export function DeviceView({ name: initialName, initialAspect, controllable, ser
     if (!serial) return
     if (mode === 'extra') {
       // This window runs its own session; main stops it when the window closes.
-      window.mirror
-        .startMirror(serial, { ...QUALITY_PRESETS[savedPreset()].options, audio: false, deviceName: initialName })
+      withPermissions(() =>
+        window.mirror.startMirror(serial, { ...QUALITY_PRESETS[savedPreset()].options, audio: false, deviceName: initialName })
+      )
         .then((r) => setName(r.deviceName))
         .catch((e: unknown) => {
-          setStartError(String(e).replace(/^.*?\[\w+\] /, ''))
+          setStartError(declinedMessage(e) ?? String(e).replace(/^.*?\[\w+\] /, ''))
           setClosed(true)
         })
       return

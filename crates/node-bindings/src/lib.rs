@@ -994,6 +994,14 @@ impl CompanionServer {
         spawn(async move { server.request_keyframe(&device_id).await });
     }
 
+    /// Whether the phone sends its sound here; otherwise it stays on the phone.
+    #[napi]
+    pub fn set_sound(&self, device_id: String, on: bool) {
+        // Called on the JS thread, outside tokio (see request_keyframe).
+        let server = self.server.clone();
+        spawn(async move { server.set_sound(&device_id, on).await });
+    }
+
     #[napi]
     pub fn set_downloads_dir(&self, dir: String) {
         self.server.set_downloads(PathBuf::from(dir));

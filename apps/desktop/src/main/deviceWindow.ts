@@ -43,6 +43,28 @@ function sizeFor(aspect: number, height: number) {
   return { width: Math.round(screenHeight * aspect) + 2 * MARGIN + TOOLBAR_WIDTH, height: Math.round(height) }
 }
 
+const ROW_GAP = 8
+
+/**
+ * Phones opened together sit side by side, centred on the screen, as tall as
+ * fits (down to the minimum; past that they overlap a little at the edges).
+ */
+function placeInRow(work: Electron.Rectangle, aspect: number, slot: { index: number; count: number }) {
+  const count = Math.max(1, slot.count)
+  const extra = TOOLBAR_WIDTH + 2 * MARGIN
+  // Height whose window width lets `count` of them fit across the screen.
+  const fitHeight = ((work.width - ROW_GAP * (count - 1)) / count - extra) / aspect + 2 * MARGIN
+  const height = Math.max(MIN_HEIGHT, Math.min(work.height * 0.88, 960, fitHeight))
+  const { width } = sizeFor(aspect, height)
+  const step = Math.min(width + ROW_GAP, (work.width - width) / Math.max(1, count - 1))
+  const rowWidth = width + step * (count - 1)
+  return {
+    height,
+    x: work.x + Math.max(0, (work.width - rowWidth) / 2) + step * slot.index,
+    y: work.y + (work.height - height) / 2
+  }
+}
+
 function lockAspect(d: DeviceWin, aspect: number): void {
   d.aspect = aspect
   // Extra size (toolbar + margins) is excluded from the ratio; macOS only,
@@ -67,15 +89,16 @@ export function registerDeviceWindowIpc({ mainWindow, onFixtureSwitch }: {
     if (!main) return
 
     const work = screen.getDisplayMatching(main.getBounds()).workArea
-    const height = Math.min(work.height * 0.88, 960)
+    const place = params.slot ? placeInRow(work, params.aspect, params.slot) : null
+    const height = place?.height ?? Math.min(work.height * 0.88, 960)
     const { width } = sizeFor(params.aspect, height)
     // Extra windows cascade so several phones don't stack exactly.
     const offset = params.mode === 'extra' ? 32 * windows.size : 0
     const win = new BrowserWindow({
       width,
       height: Math.round(height),
-      x: Math.round(work.x + (work.width - width) / 2 + offset),
-      y: Math.round(work.y + (work.height - height) / 2 + offset),
+      x: Math.round(place?.x ?? work.x + (work.width - width) / 2 + offset),
+      y: Math.round(place?.y ?? work.y + (work.height - height) / 2 + offset),
       minHeight: MIN_HEIGHT,
       frame: false,
       transparent: true,

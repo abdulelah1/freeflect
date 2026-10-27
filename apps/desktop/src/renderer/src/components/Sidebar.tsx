@@ -1,6 +1,9 @@
 import {
   AppWindowIcon,
   ArrowClockwiseIcon,
+  CheckSquareIcon,
+  CopySimpleIcon,
+  SquareIcon,
   GearSixIcon,
   PlusCircleIcon,
   SquaresFourIcon,
@@ -9,6 +12,7 @@ import {
   WarningCircleIcon,
   WifiHighIcon
 } from '@phosphor-icons/react'
+import { useState } from 'react'
 import type { AndroidDevice } from '../../../shared-ipc'
 import { useT } from '../i18n'
 import { BrandLogo } from './BrandLogo'
@@ -30,6 +34,8 @@ interface Props {
   /** Serials that currently have their own device window. */
   windowed: string[]
   onOpenWindow(device: AndroidDevice): void
+  /** Opens these phones in their own windows at once, side by side. */
+  onPopOut(devices: AndroidDevice[]): void
 }
 
 
@@ -45,9 +51,21 @@ export function Sidebar({
   onOpenSettings,
   showTestStream,
   windowed,
-  onOpenWindow
+  onOpenWindow,
+  onPopOut
 }: Props) {
   const t = useT()
+  // Choosing phones to pop out together: rows become checkboxes.
+  const [choosing, setChoosing] = useState(false)
+  const [chosen, setChosen] = useState<string[]>([])
+  const poppable = (devices ?? []).filter((d) => d.state === 'device' && !windowed.includes(d.serial))
+  const canPopMany = poppable.length >= 2
+  const isChoosing = choosing && canPopMany
+  const stopChoosing = () => {
+    setChoosing(false)
+    setChosen([])
+  }
+  const toggleChosen = (serial: string) => setChosen((c) => (c.includes(serial) ? c.filter((s) => s !== serial) : [...c, serial]))
   return (
     <aside className="flex w-72 shrink-0 flex-col border-e border-line bg-sidebar">
       <div className="drag h-12 shrink-0" />
@@ -63,16 +81,27 @@ export function Sidebar({
           {devices?.map((d) => {
             const selected = selection?.kind === 'android' && selection.serial === d.serial
             const inWindow = windowed.includes(d.serial)
+            const choosable = isChoosing && poppable.includes(d)
+            const checked = chosen.includes(d.serial)
             return (
               <li key={d.serial} className="group relative">
                 <button
                   type="button"
-                  onClick={() => onSelect({ kind: 'android', serial: d.serial })}
-                  aria-current={selected || undefined}
-                  className={`flex w-full items-center gap-3 rounded-[var(--radius-control)] px-3 py-2.5 text-start transition-colors ${
-                    selected ? 'bg-accent-soft' : 'hover:bg-fg/5'
+                  onClick={() => (isChoosing ? choosable && toggleChosen(d.serial) : onSelect({ kind: 'android', serial: d.serial }))}
+                  disabled={isChoosing && !choosable}
+                  role={isChoosing ? 'checkbox' : undefined}
+                  aria-checked={isChoosing ? checked : undefined}
+                  aria-current={(!isChoosing && selected) || undefined}
+                  className={`flex w-full items-center gap-3 rounded-[var(--radius-control)] px-3 py-2.5 text-start transition-colors disabled:opacity-50 ${
+                    !isChoosing && selected ? 'bg-accent-soft' : 'hover:bg-fg/5'
                   }`}
                 >
+                  {isChoosing &&
+                    (checked ? (
+                      <CheckSquareIcon size={18} weight="fill" className="shrink-0 text-accent" />
+                    ) : (
+                      <SquareIcon size={18} className="shrink-0 text-muted" />
+                    ))}
                   <BrandLogo brand={d.platform === 'ios' ? 'apple' : 'android'} size={18} className="shrink-0 text-muted" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{d.model ?? d.serial}</span>
@@ -88,7 +117,7 @@ export function Sidebar({
                     <WifiHighIcon size={16} className="shrink-0 text-muted group-hover:opacity-0" aria-label={t('common.wifi')} />
                   )}
                 </button>
-                {d.state === 'device' && !inWindow && (
+                {d.state === 'device' && !inWindow && !isChoosing && (
                   <button
                     type="button"
                     onClick={() => onOpenWindow(d)}
@@ -103,6 +132,51 @@ export function Sidebar({
             )
           })}
         </ul>
+        {canPopMany &&
+          (isChoosing ? (
+            <div className="mt-2 flex items-center gap-1.5 px-1">
+              <button
+                type="button"
+                disabled={chosen.length === 0}
+                onClick={() => {
+                  onPopOut(poppable.filter((d) => chosen.includes(d.serial)))
+                  stopChoosing()
+                }}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-control)] bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
+              >
+                <AppWindowIcon size={14} />
+                {t('sidebar.popOutChosen', { count: chosen.length })}
+              </button>
+              <button
+                type="button"
+                onClick={stopChoosing}
+                className="rounded-[var(--radius-control)] px-3 py-1.5 text-xs font-medium text-muted hover:bg-fg/8 hover:text-fg"
+              >
+                {t('common.cancel')}
+              </button>
+            </div>
+          ) : (
+            <div className="mt-2 grid grid-cols-2 gap-1.5 px-1">
+              <button
+                type="button"
+                onClick={() => onPopOut(poppable)}
+                title={t('sidebar.popOutAllHint')}
+                className="inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-line px-2 py-1.5 text-xs font-medium hover:bg-fg/5 active:scale-[0.98]"
+              >
+                <CopySimpleIcon size={14} />
+                {t('sidebar.popOutAll')}
+              </button>
+              <button
+                type="button"
+                onClick={() => setChoosing(true)}
+                title={t('sidebar.chooseHint')}
+                className="inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-control)] border border-line px-2 py-1.5 text-xs font-medium hover:bg-fg/5 active:scale-[0.98]"
+              >
+                <CheckSquareIcon size={14} />
+                {t('sidebar.choose')}
+              </button>
+            </div>
+          ))}
         {(devices?.filter((d) => d.state === 'device').length ?? 0) >= 2 && (
           <button
             type="button"

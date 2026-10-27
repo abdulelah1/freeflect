@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { isIosSerial, type DoctorCheckId, type DoctorFix, type DoctorResult } from '../../../shared-ipc'
 import { BrandLogo } from '../components/BrandLogo'
 import { CompanionPairing } from '../components/CompanionPairing'
+import { askMediaAccess } from '../components/PermissionGate'
 import { t, useT } from '../i18n'
 
 type Platform = 'android' | 'ios'
@@ -112,10 +113,14 @@ export function ConnectionDoctor({ serial, initialPlatform, onClose, onOpenSetup
       onOpenSetup()
     } else if (fix === 'pair-iphone') {
       setPairing(true)
+    } else if (fix === 'ask-media') {
+      // Explained first, then macOS asks. Only the camera: the microphone is
+      // asked about when the user moves the iPhone's sound to this computer.
+      await askMediaAccess(['camera'])
+      void runAll()
     } else {
+      // System Settings pages: changes there come back with Run again.
       await window.mirror.applyDoctorFix(fix).catch(() => undefined)
-      // macOS answers a permission prompt right away; System Settings changes come back with Run again.
-      if (fix === 'ask-media') void runAll()
     }
   }
 

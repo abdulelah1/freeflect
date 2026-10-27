@@ -434,6 +434,96 @@
     },
     "XXXX-XXXX": {
       "shouldTranslate": false
+    },
+    "FreeFlect finds your computer on your Wi-Fi to send it your screen, clipboard and files. It only talks to the computer you pair with, over an encrypted connection.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يعثر فريفلكت على الكمبيوتر في شبكة الواي فاي لإرسال شاشتك وحافظتك وملفاتك إليه. لا يتواصل إلا مع الكمبيوتر الذي تقرنه به، عبر اتصال مشفّر."
+          }
+        }
+      }
+    },
+    "iOS asks whether FreeFlect may find devices on your local network. Tap Allow. Without it, FreeFlect can't reach your computer.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يسأل iOS هل يُسمح لفريفلكت بالعثور على الأجهزة في شبكتك المحلية. اضغط على سماح. بدون ذلك لا يستطيع فريفلكت الوصول إلى الكمبيوتر."
+          }
+        }
+      }
+    },
+    "Local network": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الشبكة المحلية"
+          }
+        }
+      }
+    },
+    "FreeFlect needs the camera only to read the pairing code on your computer's screen. It's on only while you scan, and nothing is recorded or saved.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يحتاج فريفلكت إلى الكاميرا فقط لقراءة رمز الإقران على شاشة الكمبيوتر. تعمل فقط أثناء المسح، ولا يُسجَّل أو يُحفظ أي شيء."
+          }
+        }
+      }
+    },
+    "iOS asks whether FreeFlect may use the camera. Tap Allow. Or choose Type a code instead, which needs no camera.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يسأل iOS هل يُسمح لفريفلكت باستخدام الكاميرا. اضغط على سماح. أو اختر كتابة رمز بدلًا من ذلك، فهو لا يحتاج إلى كاميرا."
+          }
+        }
+      }
+    },
+    "Camera": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الكاميرا"
+          }
+        }
+      }
+    },
+    "Before you pair": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "قبل الإقران"
+          }
+        }
+      }
+    },
+    "Not now": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ليس الآن"
+          }
+        }
+      }
+    },
+    "Continue": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متابعة"
+          }
+        }
+      }
     }
   }
 }

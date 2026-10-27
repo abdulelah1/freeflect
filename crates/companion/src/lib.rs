@@ -141,6 +141,8 @@ struct Shared {
     pairing: Option<Pairing>,
     video: HashMap<String, Link>,
     control: HashMap<String, Link>,
+    /// Phones whose sound the desktop plays; the rest keep it on the phone.
+    sound: std::collections::HashSet<String>,
     next_id: u64,
 }
 
@@ -303,12 +305,21 @@ impl Server {
 
     /// Asks the phone's broadcast for a keyframe (a new window needs one).
     pub async fn request_keyframe(&self, device_id: &str) {
-        let writer = self.ctx.shared.lock().unwrap().video.get(device_id).map(|l| l.writer.clone());
-        if let Some(w) = writer {
-            let mut w = w.lock().await;
-            let _ = w.write_all(b"k\n").await;
-            let _ = w.flush().await;
+        send_command(&self.ctx, device_id, b"k\n").await;
+    }
+
+    /// Whether the phone sends its sound here. Off by default: the sound
+    /// stays on the phone. Remembered for its next broadcast too.
+    pub async fn set_sound(&self, device_id: &str, on: bool) {
+        {
+            let mut shared = self.ctx.shared.lock().unwrap();
+            if on {
+                shared.sound.insert(device_id.to_string());
+            } else {
+                shared.sound.remove(device_id);
+            }
         }
+        send_command(&self.ctx, device_id, if on { b"a\n" } else { b"m\n" }).await;
     }
 
     pub async fn send_clipboard(&self, device_id: &str, text: String) -> Result<()> {
@@ -339,6 +350,16 @@ impl Server {
             .get(device_id)
             .map(|l| l.writer.clone())
             .ok_or_else(|| Error::Protocol("Open the FreeFlect app on the iPhone first.".into()))
+    }
+}
+
+/// One-line command to a phone's broadcast ("k", "a" or "m"), if it is connected.
+async fn send_command(ctx: &Context, device_id: &str, command: &[u8]) {
+    let writer = ctx.shared.lock().unwrap().video.get(device_id).map(|l| l.writer.clone());
+    if let Some(w) = writer {
+        let mut w = w.lock().await;
+        let _ = w.write_all(command).await;
+        let _ = w.flush().await;
     }
 }
 
@@ -484,6 +505,11 @@ async fn serve(ctx: Arc<Context>, id: String, name: String, video: bool, reader:
         }
         link_id
     };
+    // A new broadcast starts silent; ask for the sound if it is wanted here.
+    let sound = video && ctx.shared.lock().unwrap().sound.contains(&id);
+    if sound {
+        send_command(&ctx, &id, b"a\n").await;
+    }
     let _ = ctx.events.send(if video {
         Event::ScreenStarted { device_id: id.clone(), name }
     } else {

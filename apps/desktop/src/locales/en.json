@@ -43,7 +43,15 @@
     "noPhoneBody": "The setup guide walks you through it in a few minutes. Phones you have set up before appear here on their own.",
     "setupYourPhone": "Set up your phone",
     "adbTitle": "Can't look for Android phones",
-    "adbBody": "The Android connection service isn't running. Run adb start-server in a terminal, then try again."
+    "adbBody": "The Android connection service isn't running. Run adb start-server in a terminal, then try again.",
+    "popOutAll": "Pop out all",
+    "popOutAllHint": "Open every ready phone in its own window, side by side",
+    "choose": "Choose…",
+    "chooseHint": "Choose which phones to open in their own windows",
+    "popOutChosen": {
+      "one": "Pop out {count} phone",
+      "other": "Pop out {count} phones"
+    }
   },
   "app": {
     "name": "FreeFlect"
@@ -68,6 +76,10 @@
     "notBack": {
       "title": "Your phone did not come back",
       "body": "Check the connection and that the phone is unlocked, then try again."
+    },
+    "cameraDeclined": {
+      "title": "Camera access needed",
+      "body": "macOS treats an iPhone's screen on a cable as a camera. Choose the iPhone again when you're ready, and FreeFlect will explain before macOS asks."
     }
   },
   "toast": {
@@ -97,7 +109,9 @@
     "wifiConnectedBody": "You can unplug the cable now.",
     "inFolder": "In {parent}, {folder} folder.",
     "inOneFolder": "In the {folder} folder.",
-    "iphoneWifiBody": "The iPhone is sharing its screen over Wi-Fi."
+    "iphoneWifiBody": "The iPhone is sharing its screen over Wi-Fi.",
+    "micIndicator": "macOS's microphone indicator is on",
+    "micIndicatorBody": "It's the iPhone's sound playing here, which macOS counts as a microphone. This Mac's microphone isn't used. To turn it off, click Sound on this Mac to keep the sound on the iPhone."
   },
   "transfer": {
     "install": {
@@ -167,7 +181,11 @@
     "fixtureReady": "Test stream ready",
     "fixtureReadyBody": "Plays a recorded phone-sized video through the same decoder your phone uses.",
     "pick": "Pick a device",
-    "pickBody": "Choose a phone from the list to start mirroring."
+    "pickBody": "Choose a phone from the list to start mirroring.",
+    "iphoneSoundPhone": "Sound on iPhone",
+    "iphoneSoundHere": "Sound on this Mac",
+    "iphoneSoundPhoneHint": "The iPhone's sound stays on the iPhone. Click to play it on this Mac.",
+    "iphoneSoundHereHint": "The iPhone's sound plays on this Mac, so macOS shows its microphone indicator over the cable (it counts the iPhone's sound as a microphone). Click to keep the sound on the iPhone and turn the indicator off."
   },
   "crop": {
     "label": "Crop the screen",
@@ -289,8 +307,10 @@
       "title": "Clipboard and sound",
       "share": "Share the clipboard",
       "shareHint": "Text you copy on the computer can be pasted on the phone, and the other way round.",
-      "sound": "Play the phone's sound on this computer",
-      "soundHint": "Android phones go quiet while mirroring. An iPhone on a cable does too."
+      "sound": "Play an Android phone's sound on this computer",
+      "soundHint": "The phone goes quiet while mirroring.",
+      "iphoneSound": "Play an iPhone's sound on this computer",
+      "iphoneSoundHint": "Off: the sound stays on the iPhone. On: it plays here instead. Over a cable, macOS then shows its microphone indicator while you mirror, because it counts the iPhone's sound as a microphone; this Mac's own microphone is never used. Turn this off, or click Sound on this Mac while mirroring, to turn the indicator off."
     },
     "fullscreen": {
       "title": "Full screen",
@@ -467,7 +487,7 @@
       "help1": "Nothing happens? Unlock the iPhone. Its screen only appears to the computer while it is unlocked.",
       "help2": "No Trust prompt? Unplug the cable, unlock the iPhone and plug it in again.",
       "help3": "Tapped Don't Trust by mistake? On the iPhone, open Settings, General, Transfer or Reset iPhone, Reset, Reset Location & Privacy, then reconnect.",
-      "help4": "macOS may ask to let FreeFlect use the camera and the microphone. The iPhone's screen and sound count as those, so allow both."
+      "help4": "The first time, FreeFlect explains, then macOS asks to let it use the camera, because it treats the iPhone's screen as one. Allow it. The iPhone's sound stays on the iPhone unless you move it here."
     },
     "iosApp": {
       "title": "Install the FreeFlect app on your iPhone",
@@ -522,7 +542,7 @@
     "iosDone": {
       "nextCable": "Next time, plug it in and unlock it.",
       "nextWifi": "Next time, open the FreeFlect app and start the broadcast.",
-      "cable1": "The iPhone's sound plays on this computer while mirroring. Turn it off with the speaker button.",
+      "cable1": "The iPhone's sound stays on the iPhone. To hear it here, use the Sound on iPhone button.",
       "cable2": "The folder button shows the iPhone's photos and videos. Drag them out to save them.",
       "cable3": "Controlling the iPhone from here is a developer feature. It needs Developer Mode on the iPhone and Appium's WebDriverAgent on this Mac.",
       "wifi1": "Over Wi-Fi the iPhone is view only. Controlling an iPhone needs a cable connection.",
@@ -743,8 +763,8 @@
       "cameraAsk": "macOS hasn't asked for camera access yet",
       "cameraAskDetail": "macOS treats the iPhone's screen as a camera and asks once. Choose Ask for access, then Allow.",
       "micOff": "Microphone access is off for {who}",
-      "micOffDetail": "The iPhone's sound counts as a microphone, so it can't play on this computer. The picture still works. Turn on {who} in System Settings, Privacy & Security, Microphone.",
-      "micAskDetail": "The iPhone's sound needs microphone access too. Choose Ask for access to allow it.",
+      "micOffDetail": "The iPhone's sound stays on the iPhone, so that's fine. To hear it on this computer instead, turn on {who} in System Settings, Privacy & Security, Microphone (macOS counts the iPhone's sound as a microphone).",
+      "micAskDetail": "The iPhone's sound stays on the iPhone. If you move it to this computer, macOS asks about the microphone first, because it counts the iPhone's sound as one.",
       "cameraOn": "Camera access is on for {who}",
       "bothOn": "Camera and microphone access are on for {who}",
       "captureFailDetail": "Keep the iPhone unlocked and the cable firmly in. If it still fails, unplug the iPhone, plug it in again and run the check again.",
@@ -772,7 +792,8 @@
       "noLink": "No paired iPhone is connected right now",
       "lastSeen": "{name} was last connected {when}.",
       "notSeen": "No paired iPhone has connected since FreeFlect started.",
-      "noLinkDetail": "Open the FreeFlect app on the iPhone, on the same Wi-Fi. If it says this isn't the computer it's paired with, pair it again."
+      "noLinkDetail": "Open the FreeFlect app on the iPhone, on the same Wi-Fi. If it says this isn't the computer it's paired with, pair it again.",
+      "cameraFirst": "Allow camera access first"
     }
   },
   "menu": {
@@ -844,5 +865,39 @@
     "expired": "The code expired. Close this and try again.",
     "noConnect": "Paired, but the phone did not connect. Keep Wireless debugging open and try again.",
     "usePairing": "This phone has Wireless debugging. Pair it with the QR code instead, which is encrypted."
+  },
+  "permission": {
+    "notNow": "Not now",
+    "continue": "Continue",
+    "camera": {
+      "title": "Show your iPhone's screen",
+      "why": "To show your iPhone's screen over the cable. macOS hands an iPhone's screen to apps as a camera, so FreeFlect can't show it without camera access.",
+      "next": "macOS asks whether FreeFlect may use the camera. Choose Allow. If you choose Not now, FreeFlect doesn't ask macOS, and the iPhone isn't shown.",
+      "declined": "FreeFlect needs camera access to show an iPhone on a cable. Start mirroring again when you're ready.",
+      "scope": "FreeFlect only opens your iPhone, and only while you mirror it. It never uses this Mac's own camera, and it doesn't record anything unless you press Record."
+    },
+    "microphone": {
+      "title": "Play the iPhone's sound on this Mac",
+      "why": "To play your iPhone's sound on this Mac, because you asked to. macOS hands an iPhone's sound to apps as a microphone, so FreeFlect can't play it here without microphone access.",
+      "next": "macOS asks whether FreeFlect may use the microphone. Choose Allow. If you choose Not now, the sound stays on the iPhone and mirroring works as before.",
+      "declined": "The sound stays on the iPhone.",
+      "scope": "FreeFlect only opens your iPhone's sound, never this Mac's own microphone. While the iPhone's sound plays here over the cable, macOS shows its microphone indicator (the orange dot), because it counts that sound as a microphone. To turn the indicator off, click Sound on this Mac to keep the sound on the iPhone, or stop mirroring."
+    },
+    "pairing": {
+      "title": "Before you pair",
+      "why": "Your iPhone reaches this computer over your Wi-Fi to share its screen, clipboard and files. For that, this computer has to be findable on your local network.",
+      "next": "macOS may ask whether FreeFlect can find devices on your local network. Choose Allow. If you choose Not now, pairing doesn't start.",
+      "declined": "Pairing needs this computer to be reachable on your Wi-Fi. Choose Show a new code when you're ready.",
+      "scope": "Only iPhones you pair can connect, and the connection is encrypted. Nothing is reachable on the network until you pair."
+    },
+    "keychain": {
+      "title": "FreeFlect needs its keychain item",
+      "why": "FreeFlect keeps a key in your keychain that proves this computer to your paired iPhones, so they only share their screen with this Mac. After an update, macOS asks again before FreeFlect can use it.",
+      "next": "macOS asks whether FreeFlect may use its keychain item. Choose Always Allow so it doesn't ask again until the next update. If you choose Not now, the iPhone app stays off until you open FreeFlect again; your pairings are kept.",
+      "declined": "The iPhone app stays off until FreeFlect can use its keychain item. Open FreeFlect again, or pair the iPhone again, to be asked.",
+      "scope": "FreeFlect only reads its own item, “FreeFlect Safe Storage”. It can't see your passwords or other keychain items."
+    },
+    "whyHeading": "Why FreeFlect needs this",
+    "nextHeading": "What happens next"
   }
 }

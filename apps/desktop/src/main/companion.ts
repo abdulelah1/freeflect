@@ -15,6 +15,7 @@ import { COMPANION_PREFIX, type AndroidDevice, type CompanionPairing } from '../
 import { native } from './native'
 import { onSettingsChange, settings, updateSettings } from './settings'
 import { t } from './i18n'
+import { explainInWindow, isAdhocSigned } from './permissions'
 
 type Server = import('@mirror/native').CompanionServer
 type Identity = import('@mirror/native').CompanionIdentity
@@ -58,18 +59,36 @@ async function loadPaired(): Promise<PairedPhone[]> {
 const savePaired = () => writeFile(pairedFile(), JSON.stringify(paired, null, 2), { mode: 0o600 })
 const desktopName = () => `FreeFlect on ${hostname().replace(/\.local$/, '')}`
 
+type SavedIdentity = { certPem: string; key: string; encrypted: boolean; /** App version that last read the key. */ readBy?: string }
+
 /** The saved identity, or a new one. The key is stored encrypted when the system allows it. */
 async function loadIdentity(): Promise<Identity> {
+  let saved: SavedIdentity | null = null
   try {
-    const saved = JSON.parse(await readFile(identityFile(), 'utf8')) as { certPem: string; key: string; encrypted: boolean }
-    const keyPem = saved.encrypted ? safeStorage.decryptString(Buffer.from(saved.key, 'base64')) : saved.key
-    return { certPem: saved.certPem, keyPem }
+    saved = JSON.parse(await readFile(identityFile(), 'utf8')) as SavedIdentity
   } catch {
-    // None yet, or unreadable: a new identity means every phone pairs again.
+    // None yet: made below.
+  }
+  if (saved) {
+    // After an update, macOS asks again before an ad hoc signed build can read
+    // its keychain item: say why first, and wait until the user agrees.
+    if (saved.encrypted && saved.readBy !== app.getVersion() && (await isAdhocSigned())) {
+      if (!(await explainInWindow(mainWindowRef(), 'keychain'))) throw new Error('[permission_declined] keychain')
+    }
+    // Denied in the keychain prompt: leave the iPhone link off and the
+    // pairings alone, rather than making a new identity that unpairs every phone.
+    const keyPem = saved.encrypted ? safeStorage.decryptString(Buffer.from(saved.key, 'base64')) : saved.key
+    if (saved.readBy !== app.getVersion()) {
+      await writeFile(identityFile(), JSON.stringify({ ...saved, readBy: app.getVersion() }), { mode: 0o600 })
+    }
+    return { certPem: saved.certPem, keyPem }
+  }
+  {
+    // None yet: a new identity means every phone pairs again.
     const identity = native.generateCompanionIdentity()
     const encrypted = safeStorage.isEncryptionAvailable()
     const key = encrypted ? safeStorage.encryptString(identity.keyPem).toString('base64') : identity.keyPem
-    await writeFile(identityFile(), JSON.stringify({ certPem: identity.certPem, key, encrypted }), { mode: 0o600 })
+    await writeFile(identityFile(), JSON.stringify({ certPem: identity.certPem, key, encrypted, readBy: app.getVersion() }), { mode: 0o600 })
     if (paired.length) {
       paired = []
       await savePaired()
@@ -216,6 +235,8 @@ export function attachCompanionScreen(
     throw new Error(`[not_streaming] ${t('errors.notStreaming.body')}`)
   }
   videoSinks.set(deviceId, onPacket)
+  // The phone only sends its sound while a window here plays it.
+  server?.setSound(deviceId, !!onAudio)
   if (onAudio) {
     audioSinks.set(deviceId, onAudio)
     const config = audioConfigs.get(deviceId)
@@ -240,6 +261,7 @@ export function attachCompanionScreen(
     stop: async () => {
       videoSinks.delete(deviceId)
       audioSinks.delete(deviceId)
+      server?.setSound(deviceId, false)
     }
   }
 }

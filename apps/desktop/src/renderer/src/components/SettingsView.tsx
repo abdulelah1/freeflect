@@ -10,12 +10,14 @@ import { useT } from '../i18n'
 interface Props {
   onClose(): void
   /** Sound lives in the window (it is a playback choice), so it is passed in. */
-  audioOnComputer: boolean
-  onToggleAudio(): void
+  /** Where each kind of phone's sound plays: on this computer (true) or on the phone. */
+  androidAudio: boolean
+  iphoneAudio: boolean
+  onAudioChange(iphone: boolean, on: boolean): void
 }
 
 /** App settings: where things are saved, file sharing, clipboard, full screen, the iPhone app. */
-export function SettingsView({ onClose, audioOnComputer, onToggleAudio }: Props) {
+export function SettingsView({ onClose, androidAudio, iphoneAudio, onAudioChange }: Props) {
   const t = useT()
   const [s, setS] = useState<AppSettings | null>(null)
   const [defaults, setDefaults] = useState<AppSettings | null>(null)
@@ -110,8 +112,14 @@ export function SettingsView({ onClose, audioOnComputer, onToggleAudio }: Props)
                 <ToggleRow
                   label={t('settings.clipboard.sound')}
                   hint={t('settings.clipboard.soundHint')}
-                  checked={audioOnComputer}
-                  onChange={onToggleAudio}
+                  checked={androidAudio}
+                  onChange={(on) => onAudioChange(false, on)}
+                />
+                <ToggleRow
+                  label={t('settings.clipboard.iphoneSound')}
+                  hint={t('settings.clipboard.iphoneSoundHint')}
+                  checked={iphoneAudio}
+                  onChange={(on) => onAudioChange(true, on)}
                 />
               </Section>
 

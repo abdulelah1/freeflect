@@ -43,8 +43,8 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    NSCameraUsageDescription: FreeFlect shows your iPhone's screen, which macOS treats as a camera.
-    NSMicrophoneUsageDescription: FreeFlect plays your iPhone's sound, which macOS treats as a microphone.
+    NSCameraUsageDescription: FreeFlect shows your iPhone's screen, which macOS treats as a camera. This Mac's own camera is never used.
+    NSMicrophoneUsageDescription: FreeFlect plays your iPhone's sound here when you ask it to, and macOS treats that sound as a microphone. This Mac's own microphone is never used.
     NSLocalNetworkUsageDescription: FreeFlect finds phones on your Wi-Fi to mirror them and to receive files from the FreeFlect iPhone app.
     NSBonjourServices:
       - _mirror-desk._tcp
