@@ -96,7 +96,8 @@
     "wifiConnected": "Connected over Wi-Fi",
     "wifiConnectedBody": "You can unplug the cable now.",
     "inFolder": "In {parent}, {folder} folder.",
-    "inOneFolder": "In the {folder} folder."
+    "inOneFolder": "In the {folder} folder.",
+    "iphoneWifiBody": "The iPhone is sharing its screen over Wi-Fi."
   },
   "transfer": {
     "install": {
@@ -476,16 +477,12 @@
       "help3": "The app says it is from an untrusted developer? Open Settings, General, VPN & Device Management, tap the developer, then Trust.",
       "help4": "With a free Apple ID the app stops opening after 7 days. Install it again from here."
     },
-    "iosAllow": {
-      "title": "Let the iPhone find this computer",
-      "allowed": "iPhone allowed",
-      "waiting": "Waiting for you to allow the iPhone on this computer. Allowed it before? Press Continue.",
-      "step1": "In the FreeFlect app, allow it to find devices on your local network.",
-      "step2": "This computer asks whether to allow the iPhone. Click <b>Allow</b>.",
-      "step3": "The app then says it is connected.",
+    "iosPair": {
+      "title": "Pair the iPhone with this computer",
+      "body": "You do this once. After that, only paired iPhones can connect to this computer, and the connection is encrypted.",
       "help1": "Keep the iPhone and this computer on the same Wi-Fi network. Guest and office networks sometimes block devices from seeing each other.",
-      "help2": "Turned off Local Network by mistake? On the iPhone, open Settings, Privacy & Security, Local Network, and turn on FreeFlect.",
-      "help3": "Check that the iPhone app is allowed in this computer's Settings, under FreeFlect iPhone app."
+      "help2": "The app says it can't search the network? On the iPhone, open Settings, Privacy & Security, Local Network, and turn on FreeFlect.",
+      "help3": "The code expired or didn't match? Choose Show a new code and try again."
     },
     "iosBroadcast": {
       "title": "Share the iPhone's screen",
@@ -662,7 +659,12 @@
     "pair": "Pair",
     "useQrInstead": "Use the QR code above. It's encrypted.",
     "turnOff": "Turn off Wi-Fi debugging",
-    "turnedOff": "Wi-Fi debugging is off"
+    "turnedOff": "Wi-Fi debugging is off",
+    "whichPhone": "Which phone?",
+    "android": "Android",
+    "iosNeedsApp": "Needs the FreeFlect iPhone app. Don't have it yet? Plug the iPhone in and install it from Settings, FreeFlect iPhone app.",
+    "iosPaired": "Paired with {names}",
+    "pairAnother": "Pair another iPhone"
   },
   "doctor": {
     "title": "Connection Doctor",
@@ -672,15 +674,33 @@
     "copyReport": "Copy report",
     "checking": "Checking",
     "runAgain": "Run again",
-    "startAdb": "Start it",
-    "openSetup": "Open setup guide",
     "check": {
       "adb": "Android connection service",
       "device": "Looking for your phone",
       "authorized": "Permission on your phone",
       "network": "Wi-Fi network",
       "brand": "Settings for your phone brand",
-      "stream": "Screen capture test"
+      "stream": "Screen capture test",
+      "iosCable": "Looking for an iPhone on the cable",
+      "iosPermission": "Camera and microphone permission",
+      "iosCapture": "Screen capture test",
+      "iosLan": "This computer's network",
+      "iosPaired": "Paired iPhones",
+      "iosListening": "Waiting for the iPhone app",
+      "iosLink": "Connection from the iPhone"
+    },
+    "group": {
+      "cable": "Over a cable",
+      "wifi": "Over Wi-Fi, with the iPhone app"
+    },
+    "fix": {
+      "start-adb": "Start it",
+      "open-setup": "Open setup guide",
+      "pair-iphone": "Pair iPhone",
+      "ask-media": "Ask for access",
+      "open-camera-settings": "Open Camera settings",
+      "open-microphone-settings": "Open Microphone settings",
+      "open-firewall-settings": "Open Firewall settings"
     }
   },
   "doctorMain": {
@@ -708,7 +728,52 @@
     "running": "Mirroring is running",
     "captureOk": "Screen capture works",
     "captureFail": "Screen capture did not start",
-    "captureFailDetail": "Unlock your phone and keep it on, then run the checks again."
+    "captureFailDetail": "Unlock your phone and keep it on, then run the checks again.",
+    "ios": {
+      "macOnly": "Mirroring an iPhone over a cable needs a Mac.",
+      "helperMissing": "The iPhone capture helper is missing from this build",
+      "helperMissingDetail": "Reinstall FreeFlect. Wi-Fi with the iPhone app still works.",
+      "noCable": "No iPhone on the cable",
+      "noCableDetail": "To mirror over a cable, unlock the iPhone and plug it in. If it asks whether to trust this computer, tap Trust. Using Wi-Fi only? You can ignore this part.",
+      "noCableSkip": "Needs an iPhone on the cable",
+      "yourTerminal": "the app you started FreeFlect from",
+      "devHolder": "FreeFlect is running from {who}, so macOS asks about {who} instead of FreeFlect.",
+      "cameraOff": "Camera access is off for {who}",
+      "cameraOffDetail": "macOS treats the iPhone's screen as a camera. In System Settings, Privacy & Security, Camera, turn on {who}, then quit and reopen {who}.",
+      "cameraAsk": "macOS hasn't asked for camera access yet",
+      "cameraAskDetail": "macOS treats the iPhone's screen as a camera and asks once. Choose Ask for access, then Allow.",
+      "micOff": "Microphone access is off for {who}",
+      "micOffDetail": "The iPhone's sound counts as a microphone, so it can't play on this computer. The picture still works. Turn on {who} in System Settings, Privacy & Security, Microphone.",
+      "micAskDetail": "The iPhone's sound needs microphone access too. Choose Ask for access to allow it.",
+      "cameraOn": "Camera access is on for {who}",
+      "bothOn": "Camera and microphone access are on for {who}",
+      "captureFailDetail": "Keep the iPhone unlocked and the cable firmly in. If it still fails, unplug the iPhone, plug it in again and run the check again.",
+      "offline": "This computer isn't on a network",
+      "offlineDetail": "Connect it to the same Wi-Fi as the iPhone.",
+      "firewallAll": "The macOS firewall blocks all incoming connections",
+      "firewallAllDetail": "The iPhone can't reach this computer. In System Settings, Network, Firewall, Options, turn off Block all incoming connections.",
+      "firewallApp": "The macOS firewall blocks {app}",
+      "firewallAppDetail": "In System Settings, Network, Firewall, Options, set {app} to Allow incoming connections.",
+      "vpn": "A VPN is on",
+      "vpnDetail": "Some VPNs stop devices on the same Wi-Fi from reaching each other. If the iPhone can't find this computer, turn the VPN off and try again.",
+      "online": "On the network ({ips})",
+      "appOff": "The iPhone app is turned off on this computer",
+      "appOffDetail": "Pair an iPhone to turn it on. Nothing listens on the network until then.",
+      "notPaired": "No iPhone is paired yet",
+      "notPairedDetail": "Pair once with the FreeFlect iPhone app. Only paired iPhones can connect.",
+      "paired": "Paired with {names}",
+      "notListening": "This computer isn't waiting for the iPhone app",
+      "notListeningDetail": "Quit FreeFlect and open it again. If that doesn't help, copy the report and send it to us.",
+      "notAdvertised": "The iPhone can't see this computer on the network",
+      "notAdvertisedDetail": "FreeFlect is waiting, but its announcement on the network didn't go out. Turn Wi-Fi off and on again on this computer, then run the check again.",
+      "listening": "Waiting for paired iPhones, and visible on the network",
+      "sharing": "{name} is sharing its screen.",
+      "appOpen": "{name} has the app open.",
+      "noLink": "No paired iPhone is connected right now",
+      "lastSeen": "{name} was last connected {when}.",
+      "notSeen": "No paired iPhone has connected since FreeFlect started.",
+      "noLinkDetail": "Open the FreeFlect app on the iPhone, on the same Wi-Fi. If it says this isn't the computer it's paired with, pair it again."
+    }
   },
   "menu": {
     "settingsEllipsis": "Settings…",

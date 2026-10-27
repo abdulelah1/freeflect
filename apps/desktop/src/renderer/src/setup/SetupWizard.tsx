@@ -15,6 +15,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import type { AndroidDevice, DeviceProps } from '../../../shared-ipc'
 import { BrandLogo } from '../components/BrandLogo'
 import { CompanionInstaller } from '../components/CompanionInstaller'
+import { CompanionPairPanel } from '../components/CompanionPairing'
 import { useT } from '../i18n'
 import { Rich } from '../lib/Rich'
 import { lang } from '../i18n'
@@ -38,7 +39,7 @@ type StepId =
   | 'wifiPair'
   | 'iosCable'
   | 'iosApp'
-  | 'iosAllow'
+  | 'iosPair'
   | 'iosBroadcast'
   | 'done'
 
@@ -46,12 +47,12 @@ const FLOWS: Record<`${Platform}-${Method}`, StepId[]> = {
   'android-usb': ['platform', 'method', 'brand', 'devOptions', 'usbDebugging', 'connect', 'authorize', 'done'],
   'android-wifi': ['platform', 'method', 'brand', 'devOptions', 'wifiPair', 'done'],
   'ios-usb': ['platform', 'method', 'iosCable', 'done'],
-  'ios-wifi': ['platform', 'method', 'iosApp', 'iosAllow', 'iosBroadcast', 'done']
+  'ios-wifi': ['platform', 'method', 'iosApp', 'iosPair', 'iosBroadcast', 'done']
 }
 /** Steps that finish on their own when the phone is detected. */
-const AUTO_STEPS: StepId[] = ['connect', 'authorize', 'wifiPair', 'iosCable', 'iosAllow', 'iosBroadcast']
+const AUTO_STEPS: StepId[] = ['connect', 'authorize', 'wifiPair', 'iosCable', 'iosPair', 'iosBroadcast']
 /** Steps the user confirms with Continue. */
-const CONTINUE_STEPS: StepId[] = ['devOptions', 'usbDebugging', 'iosApp', 'iosAllow']
+const CONTINUE_STEPS: StepId[] = ['devOptions', 'usbDebugging', 'iosApp', 'iosPair']
 /** Mirroring an iPhone over a cable uses macOS screen capture. */
 const IS_MAC = navigator.userAgent.includes('Mac')
 const POLL_MS = 1000
@@ -60,7 +61,8 @@ interface Props {
   onClose(): void
   /** Setup finished; start mirroring this device. */
   onComplete(serial: string): void
-  onOpenDoctor(): void
+  /** Opens the Connection Doctor for the kind of phone being set up. */
+  onOpenDoctor(platform: Platform): void
 }
 
 export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
@@ -69,18 +71,19 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
   const [platform, setPlatform] = useState<Platform>('android')
   const [method, setMethod] = useState<Method>('usb')
   const [iosDevices, setIosDevices] = useState<AndroidDevice[]>([])
-  /** Allowed iPhones when the Allow step opened; one more means the user allowed it. */
-  const [allowedBefore, setAllowedBefore] = useState<number | null>(null)
-  const [allowedNow, setAllowedNow] = useState(0)
+  /** iPhones paired with this computer; null until known. */
+  const [pairedPhones, setPairedPhones] = useState<{ deviceId: string; name: string }[] | null>(null)
+  /** Pairing another iPhone although one is paired already. */
+  const [pairAnother, setPairAnother] = useState(false)
   const [brand, setBrand] = useState<BrandId | null>(null)
   const [devices, setDevices] = useState<AndroidDevice[]>([])
   const [ready, setReady] = useState<{ serial: string; props: DeviceProps | null; name?: string } | null>(null)
 
+  const openDoctor = () => onOpenDoctor(platform)
   const flow = FLOWS[`${platform}-${method}`]
   const index = flow.indexOf(step)
   const go = (s: StepId) => {
-    // Re-entering the Allow step measures from that moment again.
-    if (s === 'iosAllow') setAllowedBefore(null)
+    if (s === 'iosPair') setPairAnother(false)
     setStep(s)
   }
   const next = () => go(flow[Math.min(index + 1, flow.length - 1)]!)
@@ -90,7 +93,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
   useEffect(() => {
     let alive = true
     const poll = async () => {
-      const [list, ios, allowed] = await Promise.all([
+      const [list, ios, paired] = await Promise.all([
         window.mirror.listAndroidDevices().catch(() => []),
         window.mirror.listIosDevices().catch(() => []),
         window.mirror.listCompanionDevices().catch(() => [])
@@ -98,7 +101,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
       if (!alive) return
       setDevices(list)
       setIosDevices(ios)
-      setAllowedNow(allowed.length)
+      setPairedPhones(paired)
     }
     void poll()
     const id = setInterval(poll, POLL_MS)
@@ -127,14 +130,11 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
     if (step === 'iosCable' && iosCabled) {
       setReady({ serial: iosCabled.serial, props: null, name: iosCabled.model ?? t('setup.yourIphone') })
       setStep('done')
-    } else if (step === 'iosAllow') {
-      if (allowedBefore === null) setAllowedBefore(allowedNow)
-      else if (allowedNow > allowedBefore) setStep('iosBroadcast')
     } else if (step === 'iosBroadcast' && iosBroadcasting) {
       setReady({ serial: iosBroadcasting.serial, props: null, name: iosBroadcasting.model ?? t('setup.yourIphone') })
       setStep('done')
     }
-  }, [platform, step, iosCabled, iosBroadcasting, allowedBefore, allowedNow])
+  }, [platform, step, iosCabled, iosBroadcasting])
 
   // Advance on its own as soon as the phone reaches the state a step waits for.
   useEffect(() => {
@@ -270,7 +270,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
                 t('setup.devOptions.help2'),
                 t('setup.devOptions.help3')
               ]}
-              onOpenDoctor={onOpenDoctor}
+              onOpenDoctor={openDoctor}
             >
               <ol className="grid gap-4">
                 <Instruction n={1}>
@@ -291,7 +291,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
                 t('setup.usbDebugging.help1'),
                 t('setup.usbDebugging.help2')
               ]}
-              onOpenDoctor={onOpenDoctor}
+              onOpenDoctor={openDoctor}
             >
               <ol className="grid gap-4">
                 <Instruction n={1}>
@@ -319,7 +319,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
                 t('setup.connect.help2'),
                 t('setup.connect.help3')
               ]}
-              onOpenDoctor={onOpenDoctor}
+              onOpenDoctor={openDoctor}
             >
               <ol className="grid gap-4">
                 <Instruction n={1}>{t('setup.connect.step1')}</Instruction>
@@ -341,7 +341,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
                 t('setup.authorize.help1'),
                 t('setup.authorize.help2')
               ]}
-              onOpenDoctor={onOpenDoctor}
+              onOpenDoctor={openDoctor}
             >
               <ol className="grid gap-4">
                 <Instruction n={1}>{t('setup.authorize.step1')}</Instruction>
@@ -369,7 +369,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
                   t('setup.wifiPair.help1'),
                   t('setup.wifiPair.help2')
                 ]}
-                onOpenDoctor={onOpenDoctor}
+                onOpenDoctor={openDoctor}
               />
             </div>
           )}
@@ -384,7 +384,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
                 t('setup.iosCable.help3'),
                 t('setup.iosCable.help4')
               ]}
-              onOpenDoctor={onOpenDoctor}
+              onOpenDoctor={openDoctor}
             >
               <ol className="grid gap-4">
                 <Instruction n={1}>{t('setup.iosCable.step1')}</Instruction>
@@ -414,35 +414,43 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
                   t('setup.iosApp.help3'),
                   t('setup.iosApp.help4')
                 ]}
-                onOpenDoctor={onOpenDoctor}
+                onOpenDoctor={openDoctor}
               />
             </div>
           )}
 
-          {step === 'iosAllow' && (
-            <InstructionStep
-              title={t('setup.iosAllow.title')}
-              status={
-                <IosStatus
-                  found={allowedBefore !== null && allowedNow > allowedBefore ? t('setup.iosAllow.allowed') : null}
-                  waiting={t('setup.iosAllow.waiting')}
-                />
-              }
-              help={[
-                t('setup.iosAllow.help1'),
-                t('setup.iosAllow.help2'),
-                t('setup.iosAllow.help3')
-              ]}
-              onOpenDoctor={onOpenDoctor}
-            >
-              <ol className="grid gap-4">
-                <Instruction n={1}>{t('setup.iosAllow.step1')}</Instruction>
-                <Instruction n={2}>
-                  <Rich text={t('setup.iosAllow.step2')} />
-                </Instruction>
-                <Instruction n={3}>{t('setup.iosAllow.step3')}</Instruction>
-              </ol>
-            </InstructionStep>
+          {step === 'iosPair' && (
+            <div className="max-w-[720px]">
+              <h1 id="setup-title" className="text-2xl font-semibold tracking-tight">
+                {t('setup.iosPair.title')}
+              </h1>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{t('setup.iosPair.body')}</p>
+              <div className="mt-8 rounded-[var(--radius-panel)] border border-line bg-surface p-6">
+                {pairedPhones === null ? (
+                  <div aria-hidden className="h-24 rounded-[var(--radius-control)] bg-fg/6" />
+                ) : pairedPhones.length > 0 && !pairAnother ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="flex items-center gap-2 text-sm font-medium">
+                      <CheckCircleIcon size={18} weight="fill" className="shrink-0 text-ok" />
+                      {t('wifi.iosPaired', { names: pairedPhones.map((p) => p.name).join(', ') })}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setPairAnother(true)}
+                      className="rounded-[var(--radius-control)] border border-line px-3 py-1.5 text-xs font-medium hover:bg-fg/6 active:scale-[0.98]"
+                    >
+                      {t('wifi.pairAnother')}
+                    </button>
+                  </div>
+                ) : (
+                  <CompanionPairPanel onPaired={() => go('iosBroadcast')} />
+                )}
+              </div>
+              <HelpBox
+                items={[t('setup.iosPair.help1'), t('setup.iosPair.help2'), t('setup.iosPair.help3')]}
+                onOpenDoctor={openDoctor}
+              />
+            </div>
           )}
 
           {step === 'iosBroadcast' && (
@@ -454,7 +462,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
                 t('setup.iosBroadcast.help2'),
                 t('setup.iosBroadcast.help3')
               ]}
-              onOpenDoctor={onOpenDoctor}
+              onOpenDoctor={openDoctor}
             >
               <ol className="grid gap-4">
                 <Instruction n={1}>
@@ -487,7 +495,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
             <ArrowLeftIcon size={16} className="rtl:-scale-x-100" />
             {t('setup.back')}
           </button>
-          {CONTINUE_STEPS.includes(step) && (
+          {CONTINUE_STEPS.includes(step) && (step !== 'iosPair' || (pairedPhones?.length ?? 0) > 0) && (
             <button
               type="button"
               onClick={next}
@@ -497,7 +505,7 @@ export function SetupWizard({ onClose, onComplete, onOpenDoctor }: Props) {
               <ArrowRightIcon size={16} className="rtl:-scale-x-100" />
             </button>
           )}
-          {AUTO_STEPS.includes(step) && !CONTINUE_STEPS.includes(step) && (
+          {AUTO_STEPS.includes(step) && (!CONTINUE_STEPS.includes(step) || (step === 'iosPair' && !pairedPhones?.length)) && (
             <span className="text-sm text-muted">{t('setup.waiting')}</span>
           )}
         </footer>

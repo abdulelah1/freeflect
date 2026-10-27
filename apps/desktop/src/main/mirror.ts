@@ -300,6 +300,35 @@ export async function probeStream(serial: string): Promise<{ ok: boolean; alread
   }
 }
 
+/**
+ * Connection Doctor, iPhone over a cable: a short capture through macOS until
+ * the first frame. Never disturbs a running session.
+ */
+export async function probeIosStream(serial: string): Promise<{ ok: boolean; alreadyRunning?: boolean; error?: string }> {
+  if (sessions.has(serial)) return { ok: true, alreadyRunning: true }
+  let session: Awaited<ReturnType<typeof native.startIosMirror>> | null = null
+  try {
+    let gotFrame: () => void = () => {}
+    let closed: (reason: string) => void = () => {}
+    const firstFrame = new Promise<void>((resolve) => (gotFrame = resolve))
+    const ended = new Promise<string>((resolve) => (closed = resolve))
+    session = await native.startIosMirror(iosHelperPath, serial.slice(IOS_PREFIX.length), 'iPhone', 2_000_000, () => gotFrame(), (reason) => closed(reason), false, () => {})
+    const timeout = new Promise<'timeout'>((r) => setTimeout(() => r('timeout'), PROBE_TIMEOUT_MS))
+    const outcome = await Promise.race([firstFrame.then(() => 'frame' as const), ended, timeout])
+    if (outcome === 'frame') return { ok: true }
+    return { ok: false, error: outcome === 'timeout' ? 'No video within 6 seconds' : outcome || 'The capture stopped' }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) }
+  } finally {
+    await session?.stop()
+  }
+}
+
+/** iPhones plugged in by cable, as macOS screen capture sees them. */
+export const usbIphones = (): AndroidDevice[] => listIosDevices()
+/** Whether the iPhone capture helper is part of this build. */
+export const iosHelperAvailable = (): boolean => process.platform === 'darwin' && existsSync(iosHelperPath)
+
 /** Desktop → phone: copy on the computer, paste on any mirrored phone. */
 async function startClipboardSync(): Promise<void> {
   if (clipboardTimer) return

@@ -105,6 +105,7 @@ const api: MirrorApi = {
   deviceProps: (serial) => ipcRenderer.invoke('android:props', serial),
   runDoctorCheck: (id, serial) => ipcRenderer.invoke('doctor:check', id, serial),
   startAdb: () => ipcRenderer.invoke('doctor:start-adb'),
+  applyDoctorFix: (fix) => ipcRenderer.invoke('doctor:fix', fix),
   appInfo: () => ipcRenderer.invoke('app:info'),
   writeClipboardText: (text) => ipcRenderer.invoke('clipboard:write-text', text),
 
