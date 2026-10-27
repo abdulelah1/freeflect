@@ -33,9 +33,15 @@ mac:
   icon: build/icon.icns
   minimumSystemVersion: "13.0"
   # "-" signs ad hoc (runs on Apple Silicon); a Developer ID identity, when
-  # configured, replaces it and enables notarization.
+  # configured, replaces it and enables notarization. scripts/package-mac.sh
+  # turns the hardened runtime on for Developer ID builds: it stops other
+  # programs from injecting code into the app and borrowing its camera and
+  # local network permissions. Ad hoc builds can't load their native module
+  # with it on.
   identity: "-"
   hardenedRuntime: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     NSCameraUsageDescription: FreeFlect shows your iPhone's screen, which macOS treats as a camera.
     NSMicrophoneUsageDescription: FreeFlect plays your iPhone's sound, which macOS treats as a microphone.

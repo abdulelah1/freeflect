@@ -22,7 +22,8 @@ export function defaultSettings(): AppSettings {
     androidFolder: '/sdcard/Download',
     hideChromeInFullscreen: false,
     clipboardSync: true,
-    companionEnabled: true,
+    // Off until the user pairs an iPhone: nothing listens on the network before that.
+    companionEnabled: false,
     companionSigning: null,
     checkForUpdates: true,
     language: 'system'
@@ -60,7 +61,7 @@ export function onSettingsChange(cb: (s: AppSettings, previous: AppSettings) => 
   listeners.push(cb)
 }
 
-async function update(patch: Partial<AppSettings>): Promise<AppSettings> {
+export async function updateSettings(patch: Partial<AppSettings>): Promise<AppSettings> {
   const previous = settings()
   const next = { ...previous, ...patch }
   // Android paths must stay in shared storage (no system folders).
@@ -83,12 +84,12 @@ export function registerSettingsIpc(): void {
     await mkdir(dir, { recursive: true })
     await shell.openPath(dir)
   })
-  ipcMain.handle('settings:set', (_e, patch: Partial<AppSettings>) => update(patch))
+  ipcMain.handle('settings:set', (_e, patch: Partial<AppSettings>) => updateSettings(patch))
   ipcMain.handle('settings:choose-folder', async (e, key: FolderSetting) => {
     const win = BrowserWindow.fromWebContents(e.sender)
     const options = { defaultPath: settings()[key], properties: ['openDirectory', 'createDirectory'] as const }
     const result = win ? await dialog.showOpenDialog(win, { ...options, properties: [...options.properties] }) : await dialog.showOpenDialog({ ...options, properties: [...options.properties] })
     if (result.canceled || !result.filePaths[0]) return settings()
-    return update({ [key]: result.filePaths[0] })
+    return updateSettings({ [key]: result.filePaths[0] })
   })
 }

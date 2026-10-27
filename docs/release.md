@@ -54,8 +54,12 @@ the developer, so the first launch is blocked. Tell users:
 To remove the warning, sign with a **Developer ID Application** certificate
 (needs a paid Apple Developer Program membership) and notarize. electron-builder
 does both when given the certificate and Apple credentials (`CSC_LINK`,
-`CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`)
-with `mac.identity` set to the certificate and `hardenedRuntime` turned on.
+`CSC_KEY_PASSWORD`, `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, `APPLE_TEAM_ID`).
+Set `CSC_NAME` to the certificate's name and `scripts/package-mac.sh` signs
+with it and turns the hardened runtime on, with the exceptions in
+`apps/desktop/build/entitlements.mac.plist`. The hardened runtime keeps other
+programs from injecting code into FreeFlect and using its camera and local
+network permissions; ad hoc builds go without it.
 
 Self-updating needs a Developer ID signature too, so for now the app only
 tells users about new versions and opens the release page.

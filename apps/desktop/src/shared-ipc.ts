@@ -105,6 +105,15 @@ export interface InstallTarget {
   developerMode: boolean
 }
 
+/** What the pairing window shows: scan the QR code, or type the code on the phone. */
+export interface CompanionPairing {
+  qrSvg: string
+  /** `XXXX-XXXX` */
+  code: string
+  expiresInSecs: number
+  desktopName: string
+}
+
 export interface CompanionInstall {
   method: 'team' | 'profile'
   teamId: string
@@ -272,7 +281,7 @@ export interface MirrorApi {
   onSettingsChanged(cb: (s: AppSettings) => void): () => void
   /** Opens a configured folder in Finder or Explorer (created if missing). */
   openSettingsFolder(key: FolderSetting): Promise<void>
-  /** iPhones allowed to use the FreeFlect iPhone app with this computer. */
+  /** iPhones paired with this computer for the FreeFlect iPhone app. */
   listCompanionDevices(): Promise<{ deviceId: string; name: string }[]>
   forgetCompanionDevice(deviceId: string): Promise<void>
   /** What is needed to install the iPhone app from this computer. */
@@ -297,9 +306,12 @@ export interface MirrorApi {
   stopIosControl(serial: string): void
   getIosControlState(serial: string): Promise<IosControlState>
   onIosControlState(cb: (serial: string, state: IosControlState) => void): () => void
-  /** A new iPhone running the companion app wants to connect. */
-  onCompanionApproval(cb: (request: { requestId: number; name: string; deviceId: string }) => void): () => void
-  approveCompanion(requestId: number, deviceId: string, allow: boolean): Promise<void>
+  /** Opens the pairing window (and allows the iPhone app if it wasn't). */
+  startCompanionPairing(): Promise<CompanionPairing>
+  cancelCompanionPairing(): Promise<void>
+  onCompanionPaired(cb: (phone: { deviceId: string; name: string }) => void): () => void
+  /** The pairing window closed: `paired`, `expired` or `attempts` (too many wrong codes). */
+  onCompanionPairingClosed(cb: (reason: string) => void): () => void
   onCompanionFile(cb: (file: { name: string; path: string }) => void): () => void
   /** Starts mirroring; rejects with a message prefixed by an error code, e.g. `[device_unauthorized]`. */
   startMirror(serial: string, options?: MirrorOptions): Promise<{ deviceName: string; audio: string }>
@@ -374,6 +386,8 @@ export interface MirrorApi {
   onQrPairStatus(cb: (status: WifiPairStatus) => void): () => void
   pairWithCode(hostPort: string, code: string): Promise<string>
   switchToWifi(serial: string): Promise<string>
+  /** Turns legacy Wi-Fi debugging back off on a plugged-in phone (closes its open port 5555). */
+  turnOffWifiDebugging(serial: string): Promise<void>
   /** `adb connect host:port`; resolves false instead of throwing. */
   connectWifi(hostPort: string): Promise<boolean>
 

@@ -28,6 +28,9 @@ final class SampleHandler: RPBroadcastSampleHandler {
                 self.lock.unlock()
             case let .failed(reason):
                 self.finishBroadcastWithError(NSError(domain: "Mirror", code: 1, userInfo: [NSLocalizedDescriptionKey: reason]))
+            case .notPaired:
+                let reason = String(localized: "Open the FreeFlect app and pair this iPhone with your computer first.")
+                self.finishBroadcastWithError(NSError(domain: "Mirror", code: 2, userInfo: [NSLocalizedDescriptionKey: reason]))
             default:
                 break
             }

@@ -19,6 +19,23 @@
       },
       "extractionState": "manual"
     },
+    "NSCameraUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يمسح فريفلكت رمز QR الذي يعرضه الكمبيوتر للإقران معه."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FreeFlect scans the QR code your computer shows to pair with it."
+          }
+        }
+      }
+    },
     "NSLocalNetworkUsageDescription": {
       "localizations": {
         "ar": {

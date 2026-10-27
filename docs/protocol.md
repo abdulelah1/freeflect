@@ -97,3 +97,67 @@ sample rate (often 44.1 kHz). Timestamps share the video clock. Silent stretches
 (ReplayKit sends nothing while the phone is quiet) are filled with silent
 frames, so frames can be played and recorded back to back. The encoder for both
 senders is `native/shared/AacEncoder.swift`.
+
+## iPhone companion app link (v2)
+
+The desktop listens on a random TCP port on all interfaces, but only while the
+iPhone app is allowed in settings **and** a phone is paired or the pairing
+window is open. It advertises `_mirror-desk._tcp` as `FreeFlect-<first 12 hex
+of the certificate fingerprint>`, which says nothing about the computer or its
+owner. Server: `crates/companion`; phone: `native/ios/MirrorCompanion/Shared/DesktopLink.swift`.
+
+Every connection is **TLS 1.3**. The desktop has a self-signed P-256
+certificate, generated once and kept in the app's profile, with the key
+encrypted by the system keychain (`companion-identity.json`). Its SHA-256
+(of the DER) is the *fingerprint*. A paired phone accepts no other certificate.
+
+After TLS, the phone sends one JSON line (at most 4 KB, within 10 s) and the
+desktop answers with one JSON line:
+
+| `role` | Hello fields | Answer |
+|---|---|---|
+| `video`, `control` | `v: 2`, `deviceId`, `name`, `secret` | `{"ok":true,"name"}` |
+| `pair` | `v: 2`, `deviceId`, `name`, `token` | `{"ok":true,"secret","name"}` |
+| `pair-code` | `v: 2`, `deviceId`, `name`, `nonce` | see below |
+
+A refusal is `{"ok":false,"reason"}`. A wrong secret adds `"paired":false`,
+and the phone drops its pairing. Plain JSON instead of TLS (the app before
+pairing existed) gets a plain refusal asking to update. Unknown phones never
+cause a prompt on the computer.
+
+**Secrets.** Pairing gives the phone 32 random bytes (`secret`, hex). The
+desktop stores only their SHA-256 (`companion-devices.json`) and compares in
+constant time. The phone stores `{fingerprint, secret, desktopName}` in the
+keychain group `$(AppIdentifierPrefix)$(FF_BUNDLE_ID).shared`, shared with the
+broadcast and share extensions.
+
+**Pairing window.** Opened by Pair iPhone in settings, for 120 s or until a
+phone pairs, whichever comes first. Three wrong tokens or codes close it.
+
+**QR code:** `freeflect://pair?v=2&fp=<fingerprint>&t=<16-byte token>&n=<desktop name>`.
+The phone pins `fp` before connecting and sends `t`.
+
+**Typed code:** 8 characters from `0123456789ABCDEFGHJKMNPQRSTVWXYZ`, shown as
+`XXXX-XXXX`. Typing ignores case and separators; `O` counts as `0`, and `I` and
+`L` count as `1`. The phone doesn't know the fingerprint yet, so it accepts any
+certificate and records the one it saw (`fp_seen`):
+
+1. phone → `{"v":2,"role":"pair-code","deviceId","name","nonce":<16 bytes>}`
+2. desktop → `{"nonce":<16 bytes>}`
+3. both: `key = PBKDF2-HMAC-SHA256(code, "freeflect-pair-v2" ‖ fp ‖ phone nonce ‖ desktop nonce, 600 000 rounds, 32 bytes)`,
+   where the desktop uses its own fingerprint and the phone uses `fp_seen`
+4. phone → `{"proof": HMAC-SHA256(key, "phone")}`
+5. desktop → `{"ok":true,"proof": HMAC-SHA256(key, "desktop"),"secret","name"}`
+
+A man in the middle shows the phone a different certificate, so the two keys
+differ and both proofs fail. Someone who records the exchange can only guess
+codes offline at 600 000 rounds per guess, and the code is dead once the window
+closes. The phone checks the desktop's proof before it pins `fp_seen`.
+
+After the answer, the `video` connection carries the packet format above with
+audio interleaved, and the desktop writes `k\n` to ask for a keyframe. The
+`control` connection carries frames of a u32 length plus JSON both ways:
+`{"type":"clipboard","text"}`, or `{"type":"file","name","size"}` followed by
+`size` bytes. Received files are flagged `com.apple.quarantine`, so macOS asks
+before opening anything executable. A newer connection from the same phone in
+the same role replaces the older one.

@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 
 use mirror_core::{Error, Result};
 use plist::Value;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, UnixStream};
 
 const SOCKET: &str = "/var/run/usbmuxd";
@@ -118,19 +118,88 @@ pub async fn connect(device_id: u64, port: u16) -> Result<UnixStream> {
     }
 }
 
-/// Forwards a local `127.0.0.1` port to `device_port` on the device until the
-/// returned handle is dropped. Returns the local port.
+/// Forwards a local `127.0.0.1` port to the HTTP server on `device_port`
+/// (WebDriverAgent) until the returned handle is dropped. Returns the local
+/// port.
+///
+/// A connection is only passed on when its first request names this port on
+/// the loopback address as `Host`: a web page that points its own domain at
+/// 127.0.0.1 (DNS rebinding) sends its domain instead and is dropped.
 pub async fn forward(device_id: u64, device_port: u16) -> Result<(u16, tokio::task::JoinHandle<()>)> {
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     let port = listener.local_addr()?.port();
     let task = tokio::spawn(async move {
         while let Ok((mut local, _)) = listener.accept().await {
             tokio::spawn(async move {
-                if let Ok(mut remote) = connect(device_id, device_port).await {
+                let Ok(Ok(head)) = tokio::time::timeout(HEAD_TIMEOUT, read_head(&mut local)).await else { return };
+                if !loopback_host(&head, port) {
+                    return;
+                }
+                if let Ok(mut remote) = connect(device_id, device_port).await
+                    && remote.write_all(&head).await.is_ok()
+                {
                     let _ = tokio::io::copy_bidirectional(&mut local, &mut remote).await;
                 }
             });
         }
     });
     Ok((port, task))
+}
+
+const HEAD_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+const MAX_HEAD_BYTES: usize = 16 * 1024;
+
+/// Reads until the end of the first request's headers (which may bring part
+/// of the body along).
+async fn read_head<R: AsyncRead + Unpin>(r: &mut R) -> Result<Vec<u8>> {
+    let mut buf = Vec::new();
+    let mut chunk = [0u8; 2048];
+    while !buf.windows(4).any(|w| w == b"\r\n\r\n") {
+        if buf.len() > MAX_HEAD_BYTES {
+            return Err(Error::Protocol("request headers too long".into()));
+        }
+        let n = r.read(&mut chunk).await?;
+        if n == 0 {
+            return Err(Error::Protocol("connection closed before the request".into()));
+        }
+        buf.extend_from_slice(&chunk[..n]);
+    }
+    Ok(buf)
+}
+
+fn loopback_host(head: &[u8], port: u16) -> bool {
+    let end = head.windows(4).position(|w| w == b"\r\n\r\n").unwrap_or(head.len());
+    let Ok(text) = std::str::from_utf8(&head[..end]) else { return false };
+    let hosts: Vec<&str> = text
+        .split("\r\n")
+        .skip(1)
+        .filter_map(|line| line.split_once(':'))
+        .filter(|(name, _)| name.trim().eq_ignore_ascii_case("host"))
+        .map(|(_, value)| value.trim())
+        .collect();
+    let allowed = [format!("127.0.0.1:{port}"), format!("localhost:{port}")];
+    matches!(hosts.as_slice(), [host] if allowed.iter().any(|a| a.eq_ignore_ascii_case(host)))
+}
+
+#[cfg(test)]
+mod forward_tests {
+    use super::*;
+
+    #[test]
+    fn only_loopback_hosts_pass() {
+        let req = |host: &str| format!("POST /session HTTP/1.1\r\nHost: {host}\r\nContent-Length: 2\r\n\r\n{{}}").into_bytes();
+        assert!(loopback_host(&req("127.0.0.1:5123"), 5123));
+        assert!(loopback_host(&req("localhost:5123"), 5123));
+        assert!(!loopback_host(&req("127.0.0.1:5124"), 5123));
+        assert!(!loopback_host(&req("evil.example:5123"), 5123));
+        assert!(!loopback_host(b"GET / HTTP/1.1\r\n\r\n", 5123));
+        assert!(!loopback_host(b"GET / HTTP/1.1\r\nHost: 127.0.0.1:5123\r\nHost: evil:5123\r\n\r\n", 5123));
+    }
+
+    #[tokio::test]
+    async fn reads_up_to_the_end_of_the_headers() {
+        let data = b"GET / HTTP/1.1\r\nHost: x\r\n\r\nbody".to_vec();
+        assert_eq!(read_head(&mut &data[..]).await.unwrap(), data);
+        assert!(read_head(&mut &b"GET / HTTP/1.1\r\n"[..]).await.is_err());
+    }
 }

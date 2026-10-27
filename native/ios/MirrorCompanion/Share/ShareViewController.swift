@@ -27,7 +27,7 @@ final class ShareViewController: UIViewController {
                 guard let self else { return }
                 switch state {
                 case .searching: self.label.text = String(localized: "Looking for your computer")
-                case let .waitingForApproval(name): self.label.text = String(localized: "Allow this iPhone on \(name)")
+                case .notPaired: self.finish(message: String(localized: "Open the FreeFlect app and pair this iPhone with your computer first."))
                 case let .connected(name):
                     self.label.text = String(localized: "Sending to \(name)")
                     self.sendItems()

@@ -242,11 +242,23 @@
     "save": "Save to this computer",
     "saveFile": "Save {name} to this computer"
   },
-  "approval": {
-    "title": "Allow {name} to connect?",
-    "body": "It's running the FreeFlect app on this Wi-Fi network. Once allowed, it can share its screen, clipboard and files with this computer.",
-    "deny": "Don't allow",
-    "allow": "Allow"
+  "pairing": {
+    "title": "Pair an iPhone",
+    "step1": "Open the FreeFlect app on the iPhone. Under Pair with a computer, tap Scan the QR code.",
+    "step2": "Scan this code. Or tap Type a code and enter the pairing code below.",
+    "codeLabel": "Pairing code",
+    "expiresIn": {
+      "one": "This code works for {count} more second, for one iPhone.",
+      "other": "This code works for {count} more seconds, for one iPhone."
+    },
+    "preparing": "Getting a code ready",
+    "qrAlt": "QR code for pairing an iPhone",
+    "done": "{name} is paired. It can now share its screen, clipboard and files with this computer.",
+    "expired": "The code expired before an iPhone used it.",
+    "attempts": "Pairing stopped after too many wrong codes. If that wasn't you, someone on this network may be trying to connect.",
+    "again": "Show a new code",
+    "cancel": "Cancel",
+    "close": "Done"
   },
   "settings": {
     "close": "Close settings",
@@ -287,12 +299,13 @@
     "companion": {
       "title": "FreeFlect iPhone app",
       "allow": "Let the iPhone app connect",
-      "allowHint": "The app finds this computer on your Wi-Fi to share its screen, clipboard and files.",
+      "allowHint": "Paired iPhones find this computer on your Wi-Fi to share their screen, clipboard and files. The connection is encrypted, and other devices can't connect.",
       "install": "Install on an iPhone",
       "installHint": "The FreeFlect iPhone app isn't on the App Store. This computer builds it with your own Apple ID or provisioning profile and installs it over the cable.",
-      "allowed": "Allowed iPhones",
-      "allowedEmpty": "None yet. The first time an iPhone opens the FreeFlect app, this computer asks whether to allow it.",
-      "forget": "Forget"
+      "allowed": "Paired iPhones",
+      "allowedEmpty": "None yet. Choose Pair iPhone, then scan the code with the FreeFlect app.",
+      "forget": "Forget",
+      "pair": "Pair iPhone"
     },
     "updates": {
       "title": "Updates",
@@ -629,7 +642,7 @@
   "wifi": {
     "sameNetwork": "Your phone and this computer need to be on the same Wi-Fi network.",
     "pluggedIn": "Already plugged in",
-    "switchHint": "Switch to Wi-Fi now, then unplug the cable. Works on any Android version.",
+    "switchHint": "For Android 10 and earlier. This connection is not encrypted, so use it only on a network you trust, and turn it off when you're done.",
     "switching": "Switching",
     "switch": "Switch to Wi-Fi",
     "qrTitle": "Pair with a QR code",
@@ -646,7 +659,10 @@
     "address": "IP address and port",
     "code": "Pairing code",
     "pairingShort": "Pairing",
-    "pair": "Pair"
+    "pair": "Pair",
+    "useQrInstead": "Use the QR code above. It's encrypted.",
+    "turnOff": "Turn off Wi-Fi debugging",
+    "turnedOff": "Wi-Fi debugging is off"
   },
   "doctor": {
     "title": "Connection Doctor",
@@ -761,6 +777,7 @@
   },
   "wifiMain": {
     "expired": "The code expired. Close this and try again.",
-    "noConnect": "Paired, but the phone did not connect. Keep Wireless debugging open and try again."
+    "noConnect": "Paired, but the phone did not connect. Keep Wireless debugging open and try again.",
+    "usePairing": "This phone has Wireless debugging. Pair it with the QR code instead, which is encrypted."
   }
 }

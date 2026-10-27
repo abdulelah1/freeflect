@@ -42,6 +42,12 @@ targets:
         NSLocalNetworkUsageDescription: FreeFlect finds your computer on this Wi-Fi network to share your screen, clipboard and files.
         NSBonjourServices: [_mirror-desk._tcp]
         NSPhotoLibraryUsageDescription: Choose photos and videos to send to your computer.
+        NSCameraUsageDescription: FreeFlect scans the QR code your computer shows to pair with it.
+        FFKeychainGroup: $(AppIdentifierPrefix)$(FF_BUNDLE_ID).shared
+    entitlements:
+      path: App/App.entitlements
+      properties:
+        keychain-access-groups: [$(AppIdentifierPrefix)$(FF_BUNDLE_ID).shared]
     dependencies:
       - target: Broadcast
       - target: Share
@@ -53,12 +59,18 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(FF_BUNDLE_ID).broadcast
         PROVISIONING_PROFILE_SPECIFIER: $(FF_PROFILE_BROADCAST)
+    # Reads the pairing the app saved (see PairingStore).
+    entitlements:
+      path: Broadcast/Broadcast.entitlements
+      properties:
+        keychain-access-groups: [$(AppIdentifierPrefix)$(FF_BUNDLE_ID).shared]
     info:
       path: Broadcast/Info.plist
       properties:
         CFBundleDisplayName: FreeFlect
         NSLocalNetworkUsageDescription: FreeFlect sends your screen to your computer on this Wi-Fi network.
         NSBonjourServices: [_mirror-desk._tcp]
+        FFKeychainGroup: $(AppIdentifierPrefix)$(FF_BUNDLE_ID).shared
         NSExtension:
           NSExtensionPointIdentifier: com.apple.broadcast-services-upload
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
@@ -71,12 +83,17 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: $(FF_BUNDLE_ID).share
         PROVISIONING_PROFILE_SPECIFIER: $(FF_PROFILE_SHARE)
+    entitlements:
+      path: Share/Share.entitlements
+      properties:
+        keychain-access-groups: [$(AppIdentifierPrefix)$(FF_BUNDLE_ID).shared]
     info:
       path: Share/Info.plist
       properties:
         CFBundleDisplayName: FreeFlect
         NSLocalNetworkUsageDescription: FreeFlect sends what you share to your computer on this Wi-Fi network.
         NSBonjourServices: [_mirror-desk._tcp]
+        FFKeychainGroup: $(AppIdentifierPrefix)$(FF_BUNDLE_ID).shared
         NSExtension:
           NSExtensionPointIdentifier: com.apple.share-services
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController

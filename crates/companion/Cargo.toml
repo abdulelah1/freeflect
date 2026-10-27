@@ -12,3 +12,14 @@ tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 mdns-sd = "0.21"
+# TLS with a self-signed identity that paired phones pin; ring also does the
+# pairing-code key derivation.
+rcgen = { version = "0.13", default-features = false, features = ["ring", "pem"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring", "logging"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "logging"] }
+rustls-pki-types = { version = "1", features = ["std"] }
+ring = "0.17"
+# setxattr (quarantine) and statvfs (free space) for received files.
+libc = "0.2"
+subtle = "2"
+

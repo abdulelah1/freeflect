@@ -5,7 +5,6 @@ import { Sidebar, type Selection } from './components/Sidebar'
 import { Stage, type Phase } from './components/Stage'
 import { Toasts, type Toast } from './components/Toasts'
 import { DevToolsPanel } from './components/DevToolsPanel'
-import { CompanionApproval } from './components/CompanionApproval'
 import { SettingsView } from './components/SettingsView'
 import { folderPhrase } from './lib/folderPhrase'
 import { t } from './i18n'
@@ -130,7 +129,6 @@ export function App() {
   const [doctorOpen, setDoctorOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   // One side panel at a time.
-  const [approval, setApproval] = useState<{ requestId: number; name: string; deviceId: string } | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [packaged, setPackaged] = useState(true)
   useEffect(() => {
@@ -225,7 +223,6 @@ export function App() {
         setPhase({ kind: 'reconnecting', name: model ?? t('common.yourPhone') })
       }),
       window.mirror.onDeviceWindowsChanged(setWindowed),
-      window.mirror.onCompanionApproval(setApproval),
       window.mirror.onUpdateAvailable((u) => showUpdate(u)),
       window.mirror.onCompanionFile(({ name, path }) =>
         showToast(
@@ -689,15 +686,6 @@ export function App() {
           onOpenSetup={() => {
             setDoctorOpen(false)
             setSetupOpen(true)
-          }}
-        />
-      )}
-      {approval && (
-        <CompanionApproval
-          name={approval.name}
-          onAnswer={(allow) => {
-            void window.mirror.approveCompanion(approval.requestId, approval.deviceId, allow)
-            setApproval(null)
           }}
         />
       )}

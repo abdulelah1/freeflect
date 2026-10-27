@@ -34,7 +34,7 @@ Phones connect directly to your computer. Nothing goes through a server.
 
 **Android:** the guide shows how to turn on Developer options and USB debugging for your phone's brand. Wi-Fi works with Android 11 or later.
 
-**iPhone:** plug it in and tap Trust to mirror over the cable. For Wi-Fi, the clipboard and files, install the FreeFlect iPhone app from Settings, FreeFlect iPhone app. FreeFlect builds it with your own Apple ID in Xcode or a provisioning profile you have; nothing is tied to the project's authors. A free Apple ID works, but then the app has to be installed again every 7 days.
+**iPhone:** plug it in and tap Trust to mirror over the cable. For Wi-Fi, the clipboard and files, install the FreeFlect iPhone app from Settings, FreeFlect iPhone app. FreeFlect builds it with your own Apple ID in Xcode or a provisioning profile you have; nothing is tied to the project's authors. A free Apple ID works, but then the app has to be installed again every 7 days. Then choose Pair iPhone in the same settings and scan the code with the app. Only paired iPhones can connect, over an encrypted connection, and the computer doesn't listen on the network until one is paired.
 
 ## Build from source
 
