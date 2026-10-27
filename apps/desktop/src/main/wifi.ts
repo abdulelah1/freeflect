@@ -15,6 +15,8 @@ import { t } from './i18n'
 const POLL_MS = 1000
 const QR_TIMEOUT_MS = 3 * 60 * 1000
 const CONNECT_TIMEOUT_MS = 15_000
+/** Android 11, the first with Wireless debugging (TLS pairing). */
+const ANDROID_11_SDK = 30
 
 let qrSession = 0
 
@@ -46,7 +48,14 @@ export function registerWifiIpc(getContents: () => WebContents | undefined): voi
     return waitForConnection(hostOf(hostPort.trim()))
   })
 
-  ipcMain.handle('wifi:enable', (_e, serial: string) => native.enableWifi(serial))
+  // Legacy `adb tcpip` is unencrypted on the network: only for phones without
+  // Wireless debugging (Android 10 and earlier). Newer ones pair with TLS above.
+  ipcMain.handle('wifi:enable', async (_e, serial: string) => {
+    const props = await native.deviceProps(serial).catch(() => null)
+    if (props && props.sdk >= ANDROID_11_SDK) throw new Error(`[use_pairing] ${t('wifiMain.usePairing')}`)
+    return native.enableWifi(serial)
+  })
+  ipcMain.handle('wifi:disable', (_e, serial: string) => native.disableWifi(serial))
   // Quiet reconnect of a remembered Wi-Fi phone; failures are expected while it is away.
   ipcMain.handle('wifi:connect', (_e, hostPort: string) => native.connectDevice(hostPort).then(() => true, () => false))
 }

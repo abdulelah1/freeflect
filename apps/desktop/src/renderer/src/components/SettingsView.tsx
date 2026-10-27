@@ -1,8 +1,9 @@
-import { ArrowCounterClockwiseIcon, FolderOpenIcon, FolderSimpleIcon, TrashIcon, XIcon } from '@phosphor-icons/react'
+import { ArrowCounterClockwiseIcon, FolderOpenIcon, FolderSimpleIcon, QrCodeIcon, TrashIcon, XIcon } from '@phosphor-icons/react'
 import { useCallback, useEffect, useId, useState, type ReactNode } from 'react'
 import type { AppSettings, FolderSetting } from '../../../shared-ipc'
 import { BrandLogo } from './BrandLogo'
 import { CompanionInstaller } from './CompanionInstaller'
+import { CompanionPairing } from './CompanionPairing'
 import { availableLanguages } from '../../../i18n'
 import { useT } from '../i18n'
 
@@ -314,12 +315,25 @@ function ToggleRow({ label, hint, checked, onChange }: { label: string; hint: st
 
 function AllowedPhones() {
   const [phones, setPhones] = useState<{ deviceId: string; name: string }[] | null>(null)
+  const [pairing, setPairing] = useState(false)
   const t = useT()
   const load = useCallback(() => void window.mirror.listCompanionDevices().then(setPhones), [])
   useEffect(load, [load])
+  useEffect(() => window.mirror.onCompanionPaired(load), [load])
   return (
     <div className="py-4">
-      <p className="text-sm font-medium">{t('settings.companion.allowed')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium">{t('settings.companion.allowed')}</p>
+        <button
+          type="button"
+          onClick={() => setPairing(true)}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] border border-line px-3 py-1.5 text-sm font-medium hover:bg-fg/6 active:scale-[0.98]"
+        >
+          <QrCodeIcon size={15} />
+          {t('settings.companion.pair')}
+        </button>
+      </div>
+      {pairing && <CompanionPairing onClose={() => setPairing(false)} />}
       {phones === null ? (
         <div aria-hidden className="mt-3 h-9 w-56 rounded-[var(--radius-control)] bg-fg/6" />
       ) : phones.length === 0 ? (

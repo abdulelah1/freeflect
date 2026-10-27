@@ -1,4 +1,4 @@
-import { WifiHighIcon, XIcon } from '@phosphor-icons/react'
+import { WarningIcon, WifiHighIcon, WifiSlashIcon, XIcon } from '@phosphor-icons/react'
 import { useEffect, useRef, useState } from 'react'
 import type { AndroidDevice } from '../../../shared-ipc'
 import { cleanError, WifiPairPanel } from './WifiPairPanel'
@@ -14,9 +14,20 @@ export function WifiDialog({ usbDevices, onClose, onConnected }: Props) {
   const t = useT()
   const [switching, setSwitching] = useState<string | null>(null)
   const [switchError, setSwitchError] = useState<string | null>(null)
+  const [turnedOff, setTurnedOff] = useState<string | null>(null)
+  /** Android SDK per plugged-in phone; null while unknown. */
+  const [sdks, setSdks] = useState<Record<string, number | null>>({})
   const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => dialogRef.current?.focus(), [])
+  useEffect(() => {
+    for (const d of usbDevices) {
+      void window.mirror.deviceProps(d.serial).then(
+        (p) => setSdks((s) => ({ ...s, [d.serial]: p.sdk })),
+        () => setSdks((s) => ({ ...s, [d.serial]: null }))
+      )
+    }
+  }, [usbDevices])
 
   const switchToWifi = async (serial: string) => {
     setSwitching(serial)
@@ -27,6 +38,16 @@ export function WifiDialog({ usbDevices, onClose, onConnected }: Props) {
       setSwitchError(cleanError(e))
     } finally {
       setSwitching(null)
+    }
+  }
+
+  const turnOff = async (serial: string) => {
+    setSwitchError(null)
+    try {
+      await window.mirror.turnOffWifiDebugging(serial)
+      setTurnedOff(serial)
+    } catch (e) {
+      setSwitchError(cleanError(e))
     }
   }
 
@@ -57,27 +78,52 @@ export function WifiDialog({ usbDevices, onClose, onConnected }: Props) {
         </div>
         <p className="mt-1 text-sm text-muted">{t('wifi.sameNetwork')}</p>
 
+        <section className="mt-5 border-t border-line pt-5">
+          <WifiPairPanel onConnected={onConnected} />
+        </section>
+
         {usbDevices.length > 0 && (
           <section className="mt-5 border-t border-line pt-5">
             <h3 className="text-sm font-medium">{t('wifi.pluggedIn')}</h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-muted">
+            <p className="mt-1 flex items-start gap-1.5 text-[13px] leading-relaxed text-muted">
+              <WarningIcon size={15} className="mt-0.5 shrink-0 text-warn" />
               {t('wifi.switchHint')}
             </p>
             <ul className="mt-3 grid gap-2">
-              {usbDevices.map((d) => (
-                <li key={d.serial} className="flex items-center justify-between gap-3">
-                  <span className="truncate text-sm">{d.model ?? d.serial}</span>
-                  <button
-                    type="button"
-                    disabled={switching !== null}
-                    onClick={() => void switchToWifi(d.serial)}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-control)] bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
-                  >
-                    <WifiHighIcon size={14} />
-                    {switching === d.serial ? t('wifi.switching') : t('wifi.switch')}
-                  </button>
-                </li>
-              ))}
+              {usbDevices.map((d) => {
+                // Android 11+ has Wireless debugging: pair above instead.
+                const modern = (sdks[d.serial] ?? 0) >= 30
+                return (
+                  <li key={d.serial} className="flex items-center justify-between gap-3">
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm">{d.model ?? d.serial}</span>
+                      {modern && <span className="block text-xs text-muted">{t('wifi.useQrInstead')}</span>}
+                      {turnedOff === d.serial && <span className="block text-xs text-ok">{t('wifi.turnedOff')}</span>}
+                    </span>
+                    <span className="flex shrink-0 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => void turnOff(d.serial)}
+                        className="inline-flex items-center gap-1.5 rounded-[var(--radius-control)] px-3 py-1.5 text-xs font-medium text-muted hover:bg-fg/8 hover:text-fg"
+                      >
+                        <WifiSlashIcon size={14} />
+                        {t('wifi.turnOff')}
+                      </button>
+                      {!modern && (
+                        <button
+                          type="button"
+                          disabled={switching !== null || !(d.serial in sdks)}
+                          onClick={() => void switchToWifi(d.serial)}
+                          className="inline-flex items-center gap-1.5 rounded-[var(--radius-control)] bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg hover:opacity-90 active:scale-[0.98] disabled:opacity-60"
+                        >
+                          <WifiHighIcon size={14} />
+                          {switching === d.serial ? t('wifi.switching') : t('wifi.switch')}
+                        </button>
+                      )}
+                    </span>
+                  </li>
+                )
+              })}
             </ul>
             {switchError && (
               <p role="alert" className="mt-2 text-xs text-err">
@@ -86,11 +132,8 @@ export function WifiDialog({ usbDevices, onClose, onConnected }: Props) {
             )}
           </section>
         )}
-
-        <section className="mt-5 border-t border-line pt-5">
-          <WifiPairPanel onConnected={onConnected} />
-        </section>
       </div>
     </div>
   )
 }
+

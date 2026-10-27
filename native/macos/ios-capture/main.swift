@@ -39,8 +39,14 @@ func allowScreenCaptureDevices() {
                               UInt32(MemoryLayout<UInt32>.size), &allow)
 }
 
+/// macOS 14 renamed the external device type; macOS 13 still needs the old one.
+private let externalDeviceType: AVCaptureDevice.DeviceType = {
+    if #available(macOS 14.0, *) { return .external }
+    return .externalUnknown
+}()
+
 func iosDevices() -> [AVCaptureDevice] {
-    AVCaptureDevice.DiscoverySession(deviceTypes: [.external], mediaType: .muxed, position: .unspecified)
+    AVCaptureDevice.DiscoverySession(deviceTypes: [externalDeviceType], mediaType: .muxed, position: .unspecified)
         .devices.filter { $0.modelID == "iOS Device" }
 }
 

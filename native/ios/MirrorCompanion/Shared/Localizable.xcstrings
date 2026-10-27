@@ -152,16 +152,6 @@
         }
       }
     },
-    "Allow this iPhone on %@": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اسمح لهذا الآيفون على %@"
-          }
-        }
-      }
-    },
     "Connected to %@": {
       "localizations": {
         "ar": {
@@ -251,6 +241,199 @@
           }
         }
       }
+    },
+    "No computer answered. Check that both are on the same Wi-Fi and that Pair iPhone is open on the computer.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يرد أي كمبيوتر. تأكد من أن الجهازين على شبكة الواي فاي نفسها وأن نافذة إقران آيفون مفتوحة على الكمبيوتر."
+          }
+        }
+      }
+    },
+    "Couldn't reach the computer.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر الوصول إلى الكمبيوتر."
+          }
+        }
+      }
+    },
+    "That code doesn't match. Check the code on the computer and try again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا الرمز غير مطابق. تحقق من الرمز على الكمبيوتر وحاول مجددًا."
+          }
+        }
+      }
+    },
+    "This isn't the computer this iPhone is paired with. If you reinstalled FreeFlect there, pair again.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا ليس الكمبيوتر المقترن بهذا الآيفون. إذا أعدت تثبيت فريفلكت عليه، فأقرنه من جديد."
+          }
+        }
+      }
+    },
+    "Open the FreeFlect app and pair this iPhone with your computer first.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "افتح تطبيق فريفلكت وأقرن هذا الآيفون بالكمبيوتر أولًا."
+          }
+        }
+      }
+    },
+    "That isn't a FreeFlect pairing code. On the computer, open Settings and choose Pair iPhone.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "هذا ليس رمز إقران فريفلكت. على الكمبيوتر، افتح الإعدادات واختر إقران آيفون."
+          }
+        }
+      }
+    },
+    "On your computer, open FreeFlect, then Settings, and choose Pair iPhone.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "على الكمبيوتر، افتح فريفلكت ثم الإعدادات، واختر إقران آيفون."
+          }
+        }
+      }
+    },
+    "Scan the QR code": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "امسح رمز QR"
+          }
+        }
+      }
+    },
+    "Type a code": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كتابة رمز"
+          }
+        }
+      }
+    },
+    "Pairing": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ الإقران"
+          }
+        }
+      }
+    },
+    "Pair with a computer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الإقران مع كمبيوتر"
+          }
+        }
+      }
+    },
+    "Computer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الكمبيوتر"
+          }
+        }
+      }
+    },
+    "Paired with %@": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مقترن بـ %@"
+          }
+        }
+      }
+    },
+    "Forget this computer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نسيان هذا الكمبيوتر"
+          }
+        }
+      }
+    },
+    "Not paired with a computer": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "غير مقترن بكمبيوتر"
+          }
+        }
+      }
+    },
+    "Enter the code shown under the QR code on your computer.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أدخل الرمز الظاهر أسفل رمز QR على الكمبيوتر."
+          }
+        }
+      }
+    },
+    "Cancel": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إلغاء"
+          }
+        }
+      }
+    },
+    "Pair": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "إقران"
+          }
+        }
+      }
+    },
+    "Allow FreeFlect to use the camera in Settings, or type the code instead.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسمح لفريفلكت باستخدام الكاميرا من الإعدادات، أو اكتب الرمز بدلًا من ذلك."
+          }
+        }
+      }
+    },
+    "XXXX-XXXX": {
+      "shouldTranslate": false
     }
   }
 }

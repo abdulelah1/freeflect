@@ -22,6 +22,11 @@ const SESSION_MARKER: u64 = u64::MAX;
 /// iPhone streams interleave audio: this marker, then an audio packet.
 const AUDIO_MARKER: u64 = u64::MAX - 1;
 
+/// Upper bounds on one packet, so a corrupt or hostile length can't make us
+/// allocate gigabytes (the companion app's stream arrives over Wi-Fi).
+const MAX_VIDEO_PACKET_BYTES: usize = 16 * 1024 * 1024;
+const MAX_AUDIO_PACKET_BYTES: usize = 64 * 1024;
+
 const CONNECT_ATTEMPTS: u32 = 50;
 const CONNECT_RETRY: Duration = Duration::from_millis(100);
 
@@ -120,7 +125,7 @@ pub async fn read_audio<R: AsyncReadExt + Unpin>(mut audio: R, tx: mpsc::Sender<
             Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => return Ok(()),
             Err(e) => return Err(e.into()),
         };
-        let len = audio.read_u32().await? as usize;
+        let len = checked_len(audio.read_u32().await?, MAX_AUDIO_PACKET_BYTES)?;
         let mut data = vec![0u8; len];
         audio.read_exact(&mut data).await?;
         let packet = AudioPacket { data, pts_us: (header & PTS_MASK) as i64, config: header & FLAG_CONFIG != 0 };
@@ -190,7 +195,7 @@ pub async fn read_video_and_audio<R: AsyncReadExt + Unpin>(
         };
         if header == AUDIO_MARKER {
             let header = video.read_u64().await?;
-            let len = video.read_u32().await? as usize;
+            let len = checked_len(video.read_u32().await?, MAX_AUDIO_PACKET_BYTES)?;
             let mut data = vec![0u8; len];
             video.read_exact(&mut data).await?;
             if let Some(a) = &audio {
@@ -207,7 +212,7 @@ pub async fn read_video_and_audio<R: AsyncReadExt + Unpin>(
             last_config = None;
             continue;
         }
-        let len = video.read_u32().await? as usize;
+        let len = checked_len(video.read_u32().await?, MAX_VIDEO_PACKET_BYTES)?;
         let mut data = vec![0u8; len];
         video.read_exact(&mut data).await?;
 
@@ -240,6 +245,14 @@ pub async fn read_video_and_audio<R: AsyncReadExt + Unpin>(
             return Ok(()); // Consumer stopped.
         }
     }
+}
+
+fn checked_len(len: u32, max: usize) -> Result<usize> {
+    let len = len as usize;
+    if len > max {
+        return Err(Error::Protocol(format!("packet too large: {len} bytes")));
+    }
+    Ok(len)
 }
 
 const DEVICE_CLIPBOARD: u8 = 0;
@@ -280,12 +293,12 @@ pub async fn pipe_server_log(shell: TcpStream) {
     }
 }
 
+/// Unpredictable, so other apps on the phone can't guess the abstract socket
+/// name and connect first. `RandomState` keys come from the OS's RNG.
 fn new_scid() -> String {
-    let nanos = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.subsec_nanos() ^ d.as_secs() as u32)
-        .unwrap_or(0);
-    format!("{:08x}", nanos ^ std::process::id().rotate_left(16))
+    use std::hash::{BuildHasher, Hasher};
+    let random = std::collections::hash_map::RandomState::new().build_hasher().finish();
+    format!("{:08x}", random as u32)
 }
 
 #[cfg(test)]
@@ -327,6 +340,25 @@ mod tests {
         assert!(later.keyframe);
         assert_eq!(later.codec_string.as_deref(), Some("avc1.640033"));
         assert_eq!(later.data, [config.as_slice(), IDR].concat());
+    }
+
+    #[tokio::test]
+    async fn rejects_oversized_packets() {
+        let mut stream = FLAG_KEY.to_be_bytes().to_vec();
+        stream.extend_from_slice(&u32::MAX.to_be_bytes());
+        let (tx, _rx) = mpsc::channel(8);
+        assert!(read_video(&stream[..], tx).await.is_err());
+
+        let mut audio = AUDIO_MARKER.to_be_bytes().to_vec();
+        audio.extend_from_slice(&0u64.to_be_bytes());
+        audio.extend_from_slice(&(1u32 << 20).to_be_bytes());
+        let (tx, _rx) = mpsc::channel(8);
+        assert!(read_video_and_audio(&audio[..], tx, None).await.is_err());
+    }
+
+    #[test]
+    fn scids_differ() {
+        assert_ne!(new_scid(), new_scid());
     }
 
     #[tokio::test]

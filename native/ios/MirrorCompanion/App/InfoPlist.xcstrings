@@ -9,9 +9,32 @@
             "state": "translated",
             "value": "فريفلكت"
           }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FreeFlect"
+          }
         }
       },
       "extractionState": "manual"
+    },
+    "NSCameraUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يمسح فريفلكت رمز QR الذي يعرضه الكمبيوتر للإقران معه."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FreeFlect scans the QR code your computer shows to pair with it."
+          }
+        }
+      }
     },
     "NSLocalNetworkUsageDescription": {
       "localizations": {
@@ -19,6 +42,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "يبحث فريفلكت عن الكمبيوتر على شبكة الواي فاي هذه لمشاركة شاشتك وحافظتك وملفاتك."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FreeFlect finds your computer on this Wi-Fi network to share your screen, clipboard and files."
           }
         }
       },
@@ -30,6 +59,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "اختر الصور والفيديوهات لإرسالها إلى الكمبيوتر."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose photos and videos to send to your computer."
           }
         }
       },

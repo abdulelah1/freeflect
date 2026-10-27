@@ -1,3 +1,4 @@
+import AVFoundation
 import PhotosUI
 import ReplayKit
 import SwiftUI
@@ -15,7 +16,11 @@ struct MirrorCompanionApp: App {
 final class Companion: ObservableObject {
     @Published var state: DesktopLink.State = .searching
     @Published var notice: String?
+    @Published var pairing = PairingStore.load()
+    @Published var pairingBusy = false
+    @Published var pairingError: String?
     private var link: DesktopLink?
+    private var pairer: DesktopPairer?
     private var incoming = Data()
     private var pendingFile: (name: String, size: Int)?
 
@@ -24,17 +29,55 @@ final class Companion: ObservableObject {
         let link = DesktopLink(role: .control)
         link.onState = { [weak self] state in
             Task { @MainActor in
-                self?.state = state
-                if case .failed = state {
-                    self?.link = nil
+                guard let self, self.link === link else { return }
+                self.state = state
+                switch state {
+                case .notPaired:
+                    self.pairing = nil
+                    self.link = nil
+                case .failed:
+                    self.link = nil
                     try? await Task.sleep(nanoseconds: 3_000_000_000)
-                    self?.connect()
+                    if self.pairing != nil { self.connect() }
+                default:
+                    break
                 }
             }
         }
         link.onData = { [weak self] data in Task { @MainActor in self?.receive(data) } }
         link.start()
         self.link = link
+    }
+
+    func pair(_ method: DesktopPairer.Method) {
+        pairer?.cancel()
+        pairingBusy = true
+        pairingError = nil
+        let pairer = DesktopPairer()
+        self.pairer = pairer
+        pairer.pair(method) { [weak self] result in
+            guard let self, self.pairer === pairer else { return }
+            self.pairingBusy = false
+            self.pairer = nil
+            switch result {
+            case let .success(pairing):
+                self.pairing = pairing
+                self.link?.stop()
+                self.link = nil
+                self.connect()
+            case let .failure(error):
+                self.pairingError = error.message
+            }
+        }
+    }
+
+    /// Unpairs on this side; the computer keeps listing the phone until it forgets it too.
+    func forget() {
+        link?.stop()
+        link = nil
+        PairingStore.clear()
+        pairing = nil
+        state = .notPaired
     }
 
     func sendClipboard() {
@@ -62,7 +105,7 @@ final class Companion: ObservableObject {
                 pendingFile = nil
                 let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
                 let safe = (file.name as NSString).lastPathComponent
-                try? bytes.write(to: docs.appendingPathComponent(safe.isEmpty ? "file" : safe))
+                try? bytes.write(to: uniqueURL(in: docs, name: safe.isEmpty || safe.hasPrefix(".") ? "file" : safe), options: .withoutOverwriting)
                 notice = String(localized: "Received \(safe). Find it in the Files app, On My iPhone, FreeFlect.")
                 continue
             }
@@ -85,10 +128,23 @@ final class Companion: ObservableObject {
     }
 }
 
+/// `name`, or `name (2)` and so on when a file already has it: nothing received overwrites a file.
+private func uniqueURL(in dir: URL, name: String) -> URL {
+    let base = dir.appendingPathComponent(name)
+    guard FileManager.default.fileExists(atPath: base.path) else { return base }
+    let stem = base.deletingPathExtension().lastPathComponent
+    let ext = base.pathExtension.isEmpty ? "" : "." + base.pathExtension
+    var i = 2
+    while FileManager.default.fileExists(atPath: dir.appendingPathComponent("\(stem) (\(i))\(ext)").path) { i += 1 }
+    return dir.appendingPathComponent("\(stem) (\(i))\(ext)")
+}
+
 struct ContentView: View {
     @StateObject private var companion = Companion()
     @State private var photos: [PhotosPickerItem] = []
     @State private var importing = false
+    @State private var scanning = false
+    @State private var typingCode = false
 
     var body: some View {
         NavigationStack {
@@ -96,31 +152,34 @@ struct ContentView: View {
                 Section {
                     statusRow
                 }
-                Section("Screen") {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Share screen").font(.headline)
-                            Text("Tap the button, choose FreeFlect, then Start Broadcast.").font(.subheadline).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        BroadcastButton().frame(width: 52, height: 52)
-                    }
+                if companion.pairing == nil {
+                    pairingSection
+                } else {
+                    connectedSections
                 }
-                Section("Send to computer") {
-                    Button { companion.sendClipboard() } label: { Label("Send clipboard", systemImage: "doc.on.clipboard") }
-                    PhotosPicker(selection: $photos, maxSelectionCount: 20, matching: .any(of: [.images, .videos])) {
-                        Label("Send photos or videos", systemImage: "photo.on.rectangle")
-                    }
-                    Button { importing = true } label: { Label("Send files", systemImage: "folder") }
-                }
-                .disabled(!isConnected)
                 if let notice = companion.notice {
                     Section { Text(notice).font(.subheadline).foregroundStyle(.secondary) }
                 }
             }
             .navigationTitle("FreeFlect")
         }
-        .onAppear { companion.connect() }
+        .onAppear { if companion.pairing != nil { companion.connect() } else { companion.state = .notPaired } }
+        .sheet(isPresented: $scanning) {
+            QRScannerSheet { text in
+                scanning = false
+                if let method = DesktopPairer.method(fromQR: text) {
+                    companion.pair(method)
+                } else {
+                    companion.pairingError = String(localized: "That isn't a FreeFlect pairing code. On the computer, open Settings and choose Pair iPhone.")
+                }
+            }
+        }
+        .sheet(isPresented: $typingCode) {
+            CodeEntrySheet { code in
+                typingCode = false
+                companion.pair(.code(code))
+            }
+        }
         .onChange(of: photos) { items in
             for item in items {
                 Task {
@@ -141,6 +200,53 @@ struct ContentView: View {
         }
     }
 
+    @ViewBuilder private var pairingSection: some View {
+        Section {
+            Text("On your computer, open FreeFlect, then Settings, and choose Pair iPhone.").font(.subheadline).foregroundStyle(.secondary)
+            Button { scanning = true } label: { Label("Scan the QR code", systemImage: "qrcode.viewfinder") }
+            Button { typingCode = true } label: { Label("Type a code", systemImage: "keyboard") }
+            if companion.pairingBusy {
+                HStack(spacing: 8) {
+                    ProgressView()
+                    Text("Pairing").foregroundStyle(.secondary)
+                }
+            }
+            if let error = companion.pairingError {
+                Text(error).font(.subheadline).foregroundStyle(.orange)
+            }
+        } header: {
+            Text("Pair with a computer")
+        }
+        .disabled(companion.pairingBusy)
+    }
+
+    @ViewBuilder private var connectedSections: some View {
+        Section("Screen") {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Share screen").font(.headline)
+                            Text("Tap the button, choose FreeFlect, then Start Broadcast.").font(.subheadline).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        BroadcastButton().frame(width: 52, height: 52)
+                    }
+                }
+                Section("Send to computer") {
+                    Button { companion.sendClipboard() } label: { Label("Send clipboard", systemImage: "doc.on.clipboard") }
+                    PhotosPicker(selection: $photos, maxSelectionCount: 20, matching: .any(of: [.images, .videos])) {
+                        Label("Send photos or videos", systemImage: "photo.on.rectangle")
+                    }
+                    Button { importing = true } label: { Label("Send files", systemImage: "folder") }
+                }
+                .disabled(!isConnected)
+                Section("Computer") {
+                    if let pairing = companion.pairing {
+                        Label("Paired with \(pairing.desktopName)", systemImage: "lock.laptopcomputer")
+                    }
+                    Button(role: .destructive) { companion.forget() } label: { Label("Forget this computer", systemImage: "xmark.circle") }
+                }
+    }
+
     private var isConnected: Bool {
         if case .connected = companion.state { return true }
         return false
@@ -151,8 +257,8 @@ struct ContentView: View {
         case .searching:
             Label("Looking for your computer", systemImage: "wifi")
             Text("Open FreeFlect on your computer and keep both on the same Wi-Fi.").font(.footnote).foregroundStyle(.secondary)
-        case let .waitingForApproval(name):
-            Label("Allow this iPhone on \(name)", systemImage: "hand.raised")
+        case .notPaired:
+            Label("Not paired with a computer", systemImage: "link")
         case let .connected(name):
             Label("Connected to \(name)", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
         case let .failed(reason):
@@ -172,4 +278,128 @@ struct BroadcastButton: UIViewRepresentable {
     }
 
     func updateUIView(_ view: RPSystemBroadcastPickerView, context: Context) {}
+}
+
+/// Asks for the code shown on the computer.
+struct CodeEntrySheet: View {
+    let onSubmit: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var code = ""
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("XXXX-XXXX", text: $code)
+                        .font(.system(.title2, design: .monospaced))
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .focused($focused)
+                        .onSubmit(submit)
+                } footer: {
+                    Text("Enter the code shown under the QR code on your computer.")
+                }
+            }
+            .navigationTitle("Type a code")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Pair", action: submit).disabled(!complete) }
+            }
+            .onAppear { focused = true }
+        }
+    }
+
+    private var complete: Bool { normalizePairingCode(code).count == 8 }
+
+    private func submit() {
+        if complete { onSubmit(code) }
+    }
+}
+
+/// The camera, until it sees a QR code.
+struct QRScannerSheet: View {
+    let onCode: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var denied = AVCaptureDevice.authorizationStatus(for: .video) == .denied
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if denied {
+                    Text("Allow FreeFlect to use the camera in Settings, or type the code instead.")
+                        .multilineTextAlignment(.center)
+                        .padding()
+                } else {
+                    QRScanner(onCode: onCode, onDenied: { denied = true }).ignoresSafeArea(edges: .bottom)
+                }
+            }
+            .navigationTitle("Scan the QR code")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
+        }
+    }
+}
+
+private struct QRScanner: UIViewControllerRepresentable {
+    let onCode: (String) -> Void
+    let onDenied: () -> Void
+
+    func makeUIViewController(context: Context) -> ScannerController {
+        let controller = ScannerController()
+        controller.onCode = onCode
+        controller.onDenied = onDenied
+        return controller
+    }
+
+    func updateUIViewController(_ controller: ScannerController, context: Context) {}
+
+    final class ScannerController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+        var onCode: ((String) -> Void)?
+        var onDenied: (() -> Void)?
+        private let session = AVCaptureSession()
+        private var preview: AVCaptureVideoPreviewLayer?
+        private var done = false
+
+        override func viewDidLoad() {
+            super.viewDidLoad()
+            view.backgroundColor = .black
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async { granted ? self.configure() : self.onDenied?() }
+            }
+        }
+
+        private func configure() {
+            guard let camera = AVCaptureDevice.default(for: .video), let input = try? AVCaptureDeviceInput(device: camera), session.canAddInput(input) else { return }
+            session.addInput(input)
+            let output = AVCaptureMetadataOutput()
+            guard session.canAddOutput(output) else { return }
+            session.addOutput(output)
+            output.setMetadataObjectsDelegate(self, queue: .main)
+            output.metadataObjectTypes = [.qr]
+            let preview = AVCaptureVideoPreviewLayer(session: session)
+            preview.videoGravity = .resizeAspectFill
+            preview.frame = view.bounds
+            view.layer.addSublayer(preview)
+            self.preview = preview
+            DispatchQueue.global(qos: .userInitiated).async { self.session.startRunning() }
+        }
+
+        override func viewDidLayoutSubviews() {
+            super.viewDidLayoutSubviews()
+            preview?.frame = view.bounds
+        }
+
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            DispatchQueue.global(qos: .userInitiated).async { self.session.stopRunning() }
+        }
+
+        func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput objects: [AVMetadataObject], from connection: AVCaptureConnection) {
+            guard !done, let code = (objects.first as? AVMetadataMachineReadableCodeObject)?.stringValue else { return }
+            done = true
+            onCode?(code)
+        }
+    }
 }

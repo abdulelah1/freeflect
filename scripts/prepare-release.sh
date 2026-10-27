@@ -6,19 +6,26 @@
 #   app builds and installs on the user's iPhone.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+# ARCH=arm64 (Apple Silicon) or x64 (Intel); defaults to this Mac's.
+ARCH="${ARCH:-$(uname -m | sed s/x86_64/x64/)}"
+case "$ARCH" in
+  arm64) RUST_TARGET=aarch64-apple-darwin ;;
+  x64) RUST_TARGET=x86_64-apple-darwin ;;
+  *) echo "Unknown ARCH $ARCH (use arm64 or x64)" >&2; exit 1 ;;
+esac
 STAGE="$ROOT/release/staging"
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 [[ "$(uname)" == "Darwin" ]] || { echo "The macOS release builds on a Mac" >&2; exit 1; }
 
 cd "$ROOT"
-pnpm build:native
+(cd crates/node-bindings && npx napi build --platform --release --target "$RUST_TARGET")
 pnpm build:server
 pnpm build:ios-capture
 
 rm -rf "$STAGE" && mkdir -p "$STAGE/native" "$STAGE/platform-tools" "$STAGE/companion/native/ios"
 cp android-server/build/mirror-server.jar "$STAGE/"
 cp native/macos/build/ios-capture "$STAGE/"
-cp "crates/node-bindings/mirror-native.darwin-$(uname -m | sed s/x86_64/x64/).node" "$STAGE/native/"
+cp "crates/node-bindings/mirror-native.darwin-$ARCH.node" "$STAGE/native/"
 
 # adb: from the SDK, or Google's platform-tools download (CI).
 if [[ ! -x "$SDK/platform-tools/adb" ]]; then
@@ -36,4 +43,4 @@ command -v xcodegen >/dev/null || { echo "Install XcodeGen: brew install xcodege
 rsync -a --exclude 'xcuserdata' --exclude '*.xcuserstate' native/ios/MirrorCompanion "$STAGE/companion/native/ios/"
 rsync -a native/shared "$STAGE/companion/native/"
 xattr -cr "$STAGE"
-echo "Staged in $STAGE"
+echo "Staged $ARCH in $STAGE"

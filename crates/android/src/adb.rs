@@ -329,6 +329,18 @@ impl AdbClient {
         }
     }
 
+    /// Restarts adbd in USB mode, closing the plaintext port `tcpip` opened.
+    pub async fn usb(&self, serial: &str) -> Result<()> {
+        let mut s = self.device_service(serial, "usb:").await?;
+        let mut reply = String::new();
+        s.read_to_string(&mut reply).await?;
+        if reply.contains("restarting") {
+            Ok(())
+        } else {
+            Err(Error::Protocol(format!("usb: {}", reply.trim())))
+        }
+    }
+
     /// IPv4 address of the device's Wi-Fi interface, if connected.
     pub async fn wifi_ip(&self, serial: &str) -> Result<Option<String>> {
         let out = self.shell_output(serial, "ip -o -4 addr show wlan0").await?;

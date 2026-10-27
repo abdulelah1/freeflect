@@ -577,6 +577,13 @@ pub async fn enable_wifi(serial: String) -> Result<String> {
     Err(to_napi_err(last_err.expect("at least one attempt")))
 }
 
+/// Turns Wi-Fi debugging back off (adbd returns to USB only), closing the
+/// unencrypted port `enable_wifi` opened. Needs the phone connected.
+#[napi]
+pub async fn disable_wifi(serial: String) -> Result<()> {
+    AdbClient::default().usb(&serial).await.map_err(to_napi_err)
+}
+
 /// Runs a shell command on the device and returns its output. Only called by
 /// the main process with fixed commands, never with renderer-supplied text.
 #[napi]
@@ -882,14 +889,46 @@ pub async fn pull_ios_file(
 
 #[napi(object)]
 pub struct CompanionEvent {
-    /// approval | screen-started | screen-stopped | clipboard | file | control-connected | control-disconnected
+    /// paired | pairing-closed | screen-started | screen-stopped | clipboard | file | control-connected | control-disconnected
     pub kind: String,
     pub device_id: String,
     pub name: Option<String>,
     pub text: Option<String>,
     pub path: Option<String>,
-    /// For `approval`: pass to `CompanionServer.approve`.
-    pub request_id: Option<u32>,
+    /// For `paired`: save it with the phone and pass it back to `startCompanionServer`.
+    pub secret_hash: Option<String>,
+    /// For `pairing-closed`: paired | expired | attempts.
+    pub reason: Option<String>,
+}
+
+/// The desktop's companion identity: self-signed certificate and key (PEM).
+#[napi(object)]
+pub struct CompanionIdentity {
+    pub cert_pem: String,
+    pub key_pem: String,
+}
+
+#[napi(object)]
+pub struct CompanionPairedDevice {
+    pub device_id: String,
+    pub secret_hash: String,
+}
+
+#[napi(object)]
+pub struct CompanionPairing {
+    /// QR code contents.
+    pub qr: String,
+    /// The same pairing as a code to type on the phone (`XXXX-XXXX`).
+    pub code: String,
+    pub expires_in_secs: u32,
+}
+
+/// Makes a new identity for the companion server; store it and reuse it, since
+/// paired phones pin its certificate.
+#[napi]
+pub fn generate_companion_identity() -> Result<CompanionIdentity> {
+    let (cert_pem, key_pem) = mirror_companion::generate_identity().map_err(to_napi_err)?;
+    Ok(CompanionIdentity { cert_pem, key_pem })
 }
 
 #[napi(object)]
@@ -918,7 +957,6 @@ type CompanionRecordings = Arc<Mutex<std::collections::HashMap<String, Recording
 #[napi]
 pub struct CompanionServer {
     server: mirror_companion::Server,
-    approvals: Arc<Mutex<std::collections::HashMap<u32, tokio::sync::oneshot::Sender<bool>>>>,
     /// Per phone; kept between broadcasts so the audio config survives.
     recordings: CompanionRecordings,
 }
@@ -930,12 +968,22 @@ impl CompanionServer {
         self.server.port as u32
     }
 
-    /// Answers an `approval` event: allow or refuse the new device.
+    /// SHA-256 of the certificate (hex), which paired phones pin.
+    #[napi(getter)]
+    pub fn fingerprint(&self) -> String {
+        self.server.fingerprint.clone()
+    }
+
+    /// Lets one phone pair during the next two minutes.
     #[napi]
-    pub fn approve(&self, request_id: u32, allow: bool) {
-        if let Some(reply) = self.approvals.lock().unwrap().remove(&request_id) {
-            let _ = reply.send(allow);
-        }
+    pub fn begin_pairing(&self) -> Result<CompanionPairing> {
+        let p = self.server.begin_pairing().map_err(to_napi_err)?;
+        Ok(CompanionPairing { qr: p.qr, code: p.code, expires_in_secs: p.expires_in_secs })
+    }
+
+    #[napi]
+    pub fn end_pairing(&self) {
+        self.server.end_pairing();
     }
 
     #[napi]
@@ -991,7 +1039,8 @@ impl CompanionServer {
 #[napi]
 pub async fn start_companion_server(
     desktop_name: String,
-    allowed: Vec<String>,
+    identity: CompanionIdentity,
+    paired: Vec<CompanionPairedDevice>,
     downloads_dir: String,
     on_event: ThreadsafeFunction<CompanionEvent, (), CompanionEvent, Status, false>,
     on_video: ThreadsafeFunction<CompanionVideoPacket, (), CompanionVideoPacket, Status, false>,
@@ -999,22 +1048,24 @@ pub async fn start_companion_server(
 ) -> Result<CompanionServer> {
     use mirror_companion::Event;
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-    let server = mirror_companion::Server::start(&desktop_name, allowed, PathBuf::from(downloads_dir), tx)
+    let paired = paired
+        .into_iter()
+        .map(|p| mirror_companion::PairedDevice { device_id: p.device_id, secret_hash: p.secret_hash })
+        .collect();
+    let server = mirror_companion::Server::start(&desktop_name, &identity.cert_pem, &identity.key_pem, paired, PathBuf::from(downloads_dir), tx)
         .await
         .map_err(to_napi_err)?;
-    let approvals = Arc::new(Mutex::new(std::collections::HashMap::new()));
-    let pending = approvals.clone();
     let recordings: CompanionRecordings = Arc::default();
     let recs = recordings.clone();
     tokio::spawn(async move {
-        let mut next_id = 0u32;
         let event = |kind: &str, device_id: String| CompanionEvent {
             kind: kind.into(),
             device_id,
             name: None,
             text: None,
             path: None,
-            request_id: None,
+            secret_hash: None,
+            reason: None,
         };
         while let Some(e) = rx.recv().await {
             let out = match e {
@@ -1036,11 +1087,10 @@ pub async fn start_companion_server(
                     );
                     continue;
                 }
-                Event::ApprovalNeeded { device_id, name, reply } => {
-                    next_id += 1;
-                    pending.lock().unwrap().insert(next_id, reply);
-                    CompanionEvent { name: Some(name), request_id: Some(next_id), ..event("approval", device_id) }
+                Event::Paired { device_id, name, secret_hash } => {
+                    CompanionEvent { name: Some(name), secret_hash: Some(secret_hash), ..event("paired", device_id) }
                 }
+                Event::PairingClosed { reason } => CompanionEvent { reason: Some(reason.into()), ..event("pairing-closed", String::new()) },
                 Event::ScreenStarted { device_id, name } => CompanionEvent { name: Some(name), ..event("screen-started", device_id) },
                 Event::Audio { device_id, packet } => {
                     recs.lock().unwrap().entry(device_id.clone()).or_default().on_audio(&packet);
@@ -1071,5 +1121,5 @@ pub async fn start_companion_server(
             on_event.call(out, ThreadsafeFunctionCallMode::NonBlocking);
         }
     });
-    Ok(CompanionServer { server, approvals, recordings })
+    Ok(CompanionServer { server, recordings })
 }

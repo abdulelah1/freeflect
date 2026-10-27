@@ -20,12 +20,16 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>FFKeychainGroup</key>
+	<string>$(AppIdentifierPrefix)$(FF_BUNDLE_ID).shared</string>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_mirror-desk._tcp</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>FreeFlect scans the QR code your computer shows to pair with it.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>FreeFlect finds your computer on this Wi-Fi network to share your screen, clipboard and files.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
