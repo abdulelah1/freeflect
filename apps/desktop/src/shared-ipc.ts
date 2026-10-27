@@ -222,6 +222,10 @@ export interface RecordingResult {
   error?: string
 }
 
+/** What macOS asks the user about; the window always explains first. */
+export type MediaPermission = 'camera' | 'microphone'
+export type PermissionKind = MediaPermission | 'pairing' | 'keychain'
+
 export type DoctorCheckId =
   | 'adb'
   | 'device'
@@ -288,6 +292,8 @@ export interface DeviceWindowParams {
   serial: string | null
   /** popout: the main window's phone moves here. extra: another phone, own session. */
   mode: 'popout' | 'extra'
+  /** Opened with others at once: place side by side, this one at `index` of `count`. */
+  slot?: { index: number; count: number }
 }
 
 export interface MirrorApi {
@@ -427,8 +433,15 @@ export interface MirrorApi {
   deviceProps(serial: string): Promise<DeviceProps>
   runDoctorCheck(id: DoctorCheckId, serial: string | null): Promise<DoctorResult>
   startAdb(): Promise<void>
-  /** Applies a fix the main process owns (permissions, System Settings). */
+  /** Applies a fix the main process owns (System Settings pages). */
   applyDoctorFix(fix: DoctorFix): Promise<void>
+  /** macOS's answer so far: 'not-determined' means it hasn't asked yet. */
+  mediaAccessStatus(kind: MediaPermission): Promise<string>
+  /** Makes macOS ask. Only after the window explained why and the user agreed. */
+  requestMediaAccess(kind: MediaPermission): Promise<boolean>
+  /** The main process wants an explanation shown before something makes macOS ask. */
+  onPermissionExplain(cb: (id: number, kind: PermissionKind) => void): () => void
+  answerPermission(id: number, ok: boolean): void
   appInfo(): Promise<AppInfo>
   writeClipboardText(text: string): Promise<void>
 

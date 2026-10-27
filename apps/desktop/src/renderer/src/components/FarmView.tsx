@@ -10,6 +10,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNod
 import type { AndroidDevice, KeyName } from '../../../shared-ipc'
 import { useInputCapture } from '../input/useInputCapture'
 import { useVideoStream } from '../video/useVideoStream'
+import { declinedMessage, withPermissions } from './PermissionGate'
 import { folderPhrase } from '../lib/folderPhrase'
 import { useT } from '../i18n'
 
@@ -149,7 +150,7 @@ function FarmTile(props: {
   useInputCapture(screenRef, failed ? null : targets)
 
   useEffect(() => {
-    window.mirror.startMirror(device.serial, TILE_OPTIONS).catch((e: unknown) => setFailed(String(e).replace(/^.*?\[\w+\] /, '')))
+    withPermissions(() => window.mirror.startMirror(device.serial, TILE_OPTIONS)).catch((e: unknown) => setFailed(declinedMessage(e) ?? String(e).replace(/^.*?\[\w+\] /, '')))
     register(device.serial, captureFrame)
     return () => {
       register(device.serial, null)

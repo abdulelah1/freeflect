@@ -15,6 +15,7 @@ import { COMPANION_PREFIX, IOS_PREFIX, isCompanionSerial, isIosSerial, type Andr
 import { attachCompanionScreen, companionDevices } from './companion'
 import { timestampedName } from './files'
 import { injectIos, stopAllIosControl, stopIosControl } from './iosControl'
+import { requireMediaDecided } from './permissions'
 import { settings } from './settings'
 import { native, type AndroidMirror } from './native'
 
@@ -111,6 +112,9 @@ export function registerMirrorIpc(serverJar: string, iosHelper: string): void {
   ipcMain.handle('ios:devices', () => [...listIosDevices(), ...companionDevices()])
 
   ipcMain.handle('mirror:start', async (e, serial: string, options?: MirrorOptions) => {
+    // An iPhone on a cable is a camera (and its sound a microphone) to macOS:
+    // the window explains that before macOS asks.
+    if (isIosSerial(serial) && !isCompanionSerial(serial)) requireMediaDecided(options?.audio ? ['camera', 'microphone'] : ['camera'])
     const gen = bump(serial)
     owners.set(serial, e.sender)
     await stopSession(serial)

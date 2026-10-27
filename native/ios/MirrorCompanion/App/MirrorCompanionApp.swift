@@ -145,6 +145,8 @@ struct ContentView: View {
     @State private var importing = false
     @State private var scanning = false
     @State private var typingCode = false
+    /// Shown before iOS asks for anything pairing needs (local network, camera).
+    @State private var primer: PairingPrimer.Method?
 
     var body: some View {
         NavigationStack {
@@ -174,6 +176,16 @@ struct ContentView: View {
                 }
             }
         }
+        .sheet(item: $primer) { method in
+            PairingPrimer(method: method) {
+                primer = nil
+                PairingPrimer.markExplained()
+                // Let the sheet go away before the next one opens.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { proceed(method) }
+            } onCancel: {
+                primer = nil
+            }
+        }
         .sheet(isPresented: $typingCode) {
             CodeEntrySheet { code in
                 typingCode = false
@@ -200,11 +212,23 @@ struct ContentView: View {
         }
     }
 
+    /// Explains first if iOS is about to ask for something, then pairs.
+    private func begin(_ method: PairingPrimer.Method) {
+        if PairingPrimer.needed(for: method) { primer = method } else { proceed(method) }
+    }
+
+    private func proceed(_ method: PairingPrimer.Method) {
+        switch method {
+        case .scan: scanning = true
+        case .code: typingCode = true
+        }
+    }
+
     @ViewBuilder private var pairingSection: some View {
         Section {
             Text("On your computer, open FreeFlect, then Settings, and choose Pair iPhone.").font(.subheadline).foregroundStyle(.secondary)
-            Button { scanning = true } label: { Label("Scan the QR code", systemImage: "qrcode.viewfinder") }
-            Button { typingCode = true } label: { Label("Type a code", systemImage: "keyboard") }
+            Button { begin(.scan) } label: { Label("Scan the QR code", systemImage: "qrcode.viewfinder") }
+            Button { begin(.code) } label: { Label("Type a code", systemImage: "keyboard") }
             if companion.pairingBusy {
                 HStack(spacing: 8) {
                     ProgressView()
@@ -401,5 +425,62 @@ private struct QRScanner: UIViewControllerRepresentable {
             done = true
             onCode?(code)
         }
+    }
+}
+
+/// Says what iOS is about to ask and why, before it asks: finding the
+/// computer on the local network, and the camera for the QR code.
+struct PairingPrimer: View {
+    enum Method: Identifiable {
+        case scan, code
+        var id: Self { self }
+    }
+
+    let method: Method
+    let onContinue: () -> Void
+    let onCancel: () -> Void
+
+    private static let explainedKey = "explainedLocalNetwork"
+
+    static func needed(for method: Method) -> Bool {
+        !UserDefaults.standard.bool(forKey: explainedKey) || (method == .scan && cameraUndecided)
+    }
+
+    static func markExplained() {
+        UserDefaults.standard.set(true, forKey: explainedKey)
+    }
+
+    private static var cameraUndecided: Bool { AVCaptureDevice.authorizationStatus(for: .video) == .notDetermined }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                if !UserDefaults.standard.bool(forKey: Self.explainedKey) {
+                    Section {
+                        Text("FreeFlect finds your computer on your Wi-Fi to send it your screen, clipboard and files. It only talks to the computer you pair with, over an encrypted connection.")
+                        Text("iOS asks whether FreeFlect may find devices on your local network. Tap Allow. Without it, FreeFlect can't reach your computer.")
+                            .foregroundStyle(.secondary)
+                    } header: {
+                        Label("Local network", systemImage: "wifi")
+                    }
+                }
+                if method == .scan && Self.cameraUndecided {
+                    Section {
+                        Text("FreeFlect needs the camera only to read the pairing code on your computer's screen. It's on only while you scan, and nothing is recorded or saved.")
+                        Text("iOS asks whether FreeFlect may use the camera. Tap Allow. Or choose Type a code instead, which needs no camera.")
+                            .foregroundStyle(.secondary)
+                    } header: {
+                        Label("Camera", systemImage: "camera")
+                    }
+                }
+            }
+            .navigationTitle("Before you pair")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Not now", action: onCancel) }
+                ToolbarItem(placement: .confirmationAction) { Button("Continue", action: onContinue) }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }

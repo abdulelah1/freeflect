@@ -223,7 +223,7 @@ export function Stage(props: Props) {
                     {props.screenOff ? <DeviceMobileSlashIcon size={18} /> : <DeviceMobileIcon size={18} />}
                   </button>
                 )}
-                {isPhone && (
+                {isPhone && !isIos && (
                   <button
                     type="button"
                     onClick={props.onToggleAudio}
@@ -235,6 +235,21 @@ export function Stage(props: Props) {
                     className={iconButton}
                   >
                     {props.audioOnComputer ? <SpeakerHighIcon size={18} /> : <SpeakerSlashIcon size={18} />}
+                  </button>
+                )}
+                {isIos && (
+                  // Spelled out for iPhones: the sound stays on the iPhone until moved here on purpose.
+                  <button
+                    type="button"
+                    onClick={props.onToggleAudio}
+                    aria-pressed={props.audioOnComputer}
+                    title={props.audioOnComputer ? t('stage.iphoneSoundHereHint') : t('stage.iphoneSoundPhoneHint')}
+                    className={`inline-flex h-8 items-center gap-1.5 rounded-[var(--radius-control)] border px-2.5 text-xs font-medium ${
+                      props.audioOnComputer ? 'border-accent bg-accent-soft text-accent' : 'border-line text-muted hover:bg-fg/8 hover:text-fg'
+                    }`}
+                  >
+                    {props.audioOnComputer ? <SpeakerHighIcon size={16} /> : <DeviceMobileIcon size={16} />}
+                    {props.audioOnComputer ? t('stage.iphoneSoundHere') : t('stage.iphoneSoundPhone')}
                   </button>
                 )}
                 <button

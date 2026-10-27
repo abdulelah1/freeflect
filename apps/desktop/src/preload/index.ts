@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from 'electron'
-import type { AppSettings, AudioPacket, LanguageState, CompanionInstallProgress, UpdateInfo, IosControlState, MenuCommand, MirrorApi, RecordingResult, Transfer, VideoPacket, WifiPairStatus } from '../shared-ipc'
+import type { AppSettings, AudioPacket, LanguageState, CompanionInstallProgress, UpdateInfo, IosControlState, MenuCommand, MirrorApi, RecordingResult, Transfer, VideoPacket, WifiPairStatus, PermissionKind } from '../shared-ipc'
 
 function subscribe<T extends unknown[]>(channel: string, cb: (...args: T) => void): () => void {
   const listener = (_e: Electron.IpcRendererEvent, ...args: unknown[]) => cb(...(args as T))
@@ -106,6 +106,10 @@ const api: MirrorApi = {
   runDoctorCheck: (id, serial) => ipcRenderer.invoke('doctor:check', id, serial),
   startAdb: () => ipcRenderer.invoke('doctor:start-adb'),
   applyDoctorFix: (fix) => ipcRenderer.invoke('doctor:fix', fix),
+  mediaAccessStatus: (kind) => ipcRenderer.invoke('permissions:status', kind),
+  requestMediaAccess: (kind) => ipcRenderer.invoke('permissions:request', kind),
+  onPermissionExplain: (cb) => subscribe<[number, PermissionKind]>('permission:explain', cb),
+  answerPermission: (id, ok) => ipcRenderer.send('permission:answer', id, ok),
   appInfo: () => ipcRenderer.invoke('app:info'),
   writeClipboardText: (text) => ipcRenderer.invoke('clipboard:write-text', text),
 

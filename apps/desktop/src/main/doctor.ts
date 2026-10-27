@@ -11,6 +11,7 @@ import { isIosSerial, type DoctorCheckId, type DoctorFix, type DoctorResult } fr
 import { companionStatus } from './companion'
 import { iosHelperAvailable, probeIosStream, probeStream, usbIphones } from './mirror'
 import { native } from './native'
+import { mediaStatus } from './permissions'
 import { adbPath } from './adb'
 import { currentLanguage, t } from './i18n'
 
@@ -220,17 +221,20 @@ async function checkIphone(id: DoctorCheckId, serial: string | null): Promise<Do
       if (camera === 'not-determined') {
         return { id, status: 'warn', title: k('cameraAsk'), detail: k('cameraAskDetail', { who }) + viaTerminal, fix: 'ask-media', raw: `camera=${camera} microphone=${mic}` }
       }
+      // The iPhone's sound stays on the iPhone unless moved here, so the microphone is optional.
       if (mic === 'denied' || mic === 'restricted') {
-        return { id, status: 'warn', title: k('micOff', { who }), detail: k('micOffDetail', { who }) + viaTerminal, fix: 'open-microphone-settings', raw: `camera=${camera} microphone=${mic}` }
+        return { id, status: 'pass', title: k('cameraOn', { who }), detail: k('micOffDetail', { who }) + viaTerminal, fix: 'open-microphone-settings', raw: `camera=${camera} microphone=${mic}` }
       }
       if (mic === 'not-determined') {
-        return { id, status: 'pass', title: k('cameraOn', { who }), detail: k('micAskDetail'), fix: 'ask-media' }
+        return { id, status: 'pass', title: k('cameraOn', { who }), detail: k('micAskDetail') }
       }
       return { id, status: 'pass', title: k('bothOn', { who }) }
     }
     case 'iosCapture': {
       const target = serial && isIosSerial(serial) && serial.startsWith('ios:') ? serial : usbIphones()[0]?.serial
       if (!target) return { id, status: 'skip', title: k('noCableSkip') }
+      // The test must not be what makes macOS ask: permission comes first, with an explanation.
+      if (mediaStatus('camera') !== 'granted') return { id, status: 'skip', title: k('cameraFirst') }
       const result = await probeIosStream(target)
       if (result.ok) return { id, status: 'pass', title: result.alreadyRunning ? t('doctorMain.running') : t('doctorMain.captureOk') }
       return { id, status: 'fail', title: t('doctorMain.captureFail'), detail: k('captureFailDetail'), raw: result.error }
@@ -282,12 +286,8 @@ const SETTINGS_PAGES: Partial<Record<DoctorFix, string>> = {
 }
 
 async function applyFix(fix: DoctorFix): Promise<void> {
-  if (fix === 'ask-media' && process.platform === 'darwin') {
-    await systemPreferences.askForMediaAccess('camera')
-    await systemPreferences.askForMediaAccess('microphone')
-    return
-  }
-  // Only fixed pages: the window never names what to open.
+  // Only fixed pages: the window never names what to open. (Asking for camera
+  // and microphone access goes through the window's explanation first.)
   const page = SETTINGS_PAGES[fix]
   if (page) await shell.openExternal(page)
 }

@@ -305,6 +305,27 @@ async fn received_files_are_quarantined() {
     }
 }
 
+#[tokio::test]
+async fn sound_stays_on_the_phone_until_asked() {
+    let f = start(paired_phone()).await;
+    // Wanted before the broadcast starts: asked for right after the handshake.
+    f.server.set_sound("PHONE-1", true).await;
+    let (mut s, reply) = hello(&f, "video", &SECRET).await;
+    assert_eq!(reply["ok"], true);
+    let mut line = String::new();
+    tokio::time::timeout(Duration::from_secs(2), s.read_line(&mut line)).await.unwrap().unwrap();
+    assert_eq!(line, "a\n");
+    f.server.set_sound("PHONE-1", false).await;
+    line.clear();
+    tokio::time::timeout(Duration::from_secs(2), s.read_line(&mut line)).await.unwrap().unwrap();
+    assert_eq!(line, "m\n");
+
+    // Not wanted: a new broadcast gets no command at all.
+    let (mut s, _) = hello(&f, "video", &SECRET).await;
+    line.clear();
+    assert!(tokio::time::timeout(Duration::from_millis(300), s.read_line(&mut line)).await.is_err());
+}
+
 #[test]
 fn sanitizes_file_names() {
     assert_eq!(sanitize("../../etc/passwd"), "passwd");

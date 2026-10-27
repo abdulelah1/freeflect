@@ -6,6 +6,7 @@ import { Stage, type Phase } from './components/Stage'
 import { Toasts, type Toast } from './components/Toasts'
 import { DevToolsPanel } from './components/DevToolsPanel'
 import { SettingsView } from './components/SettingsView'
+import { declinedPermission, withPermissions } from './components/PermissionGate'
 import { folderPhrase } from './lib/folderPhrase'
 import { t } from './i18n'
 import { useCrop } from './lib/crop'
@@ -29,6 +30,8 @@ const STATS_KEY = 'mirror.showStats'
 const SETUP_SEEN_KEY = 'mirror.setupSeen'
 /** '0' = keep sound on the phone; anything else = play it on the computer. */
 const AUDIO_KEY = 'mirror.audio'
+/** iPhones keep their sound unless the user moves it to the computer (separate from Android). */
+const IPHONE_AUDIO_KEY = 'mirror.audio.iphone'
 /** Last phone mirrored in the main window, started again on launch. */
 const LAST_DEVICE_KEY = 'mirror.lastDevice'
 /** Wi-Fi phones (ip:port) to reconnect to quietly while they are away. */
@@ -64,6 +67,9 @@ function describeStartError(raw: string): Phase {
   if (detail.includes('[device_not_found]')) {
     return { kind: 'error', title: t('errors.notFound.title'), body: t('errors.notFound.body'), detail }
   }
+  if (detail.includes('[permission_declined] camera')) {
+    return { kind: 'error', title: t('errors.cameraDeclined.title'), body: t('errors.cameraDeclined.body'), detail }
+  }
   if (detail.includes('[not_streaming]')) {
     return { kind: 'error', title: t('errors.notStreaming.title'), body: t('errors.notStreaming.body'), detail }
   }
@@ -80,11 +86,13 @@ function loadQuality(): QualityPreset {
   return 'max'
 }
 
-function readFlag(key: string): boolean {
+/** A saved on/off choice; `fallback` until one is saved. */
+function readFlag(key: string, fallback = false): boolean {
   try {
-    return localStorage.getItem(key) === '1'
+    const value = localStorage.getItem(key)
+    return value === null ? fallback : value === '1'
   } catch {
-    return false
+    return fallback
   }
 }
 
@@ -147,13 +155,12 @@ export function App() {
     streaming,
     selection?.kind === 'android' ? selection.serial : undefined
   )
-  const [audioOnComputer, setAudioOnComputer] = useState(() => {
-    try {
-      return localStorage.getItem(AUDIO_KEY) !== '0'
-    } catch {
-      return true
-    }
-  })
+  // Android plays on the computer unless turned off; iPhones keep their sound
+  // (and the phone's own microphone) until the user moves it here.
+  const [androidAudio, setAndroidAudio] = useState(() => readFlag(AUDIO_KEY, true))
+  const [iphoneAudio, setIphoneAudio] = useState(() => readFlag(IPHONE_AUDIO_KEY, false))
+  const audioFor = (serial: string | null | undefined) => (isIosSerial(serial) ? iphoneAudio : androidAudio)
+  const audioOnComputer = audioFor(selection?.kind === 'android' ? selection.serial : null)
   useAudioPlayback(streaming && selection?.kind === 'android' && audioOnComputer)
   // Guards against a stale start resolving after the user switched device.
   const attempt = useRef(0)
@@ -311,7 +318,7 @@ export function App() {
   }, [])
 
   const start = useCallback(
-    async (target: Selection, preset: QualityPreset = quality, audio: boolean = audioOnComputer) => {
+    async (target: Selection, preset: QualityPreset = quality, audioOverride?: boolean) => {
       // The farm view starts its own tile sessions.
       if (!target || target.kind === 'farm') return
       const id = ++attempt.current
@@ -330,14 +337,26 @@ export function App() {
             if (!known.includes(target.serial)) writeJson(WIFI_DEVICES_KEY, [...known, target.serial].slice(-8))
           }
           const name = devicesRef.current?.find((d) => d.serial === target.serial)?.model ?? undefined
-          const result = await window.mirror.startMirror(target.serial, {
-            ...QUALITY_PRESETS[preset].options,
-            audio,
-            deviceName: name
-          })
+          let audio = audioOverride ?? audioFor(target.serial)
+          const open = () => window.mirror.startMirror(target.serial, { ...QUALITY_PRESETS[preset].options, audio, deviceName: name })
+          let result: Awaited<ReturnType<typeof open>>
+          try {
+            // macOS asks about the camera (and the microphone, for the sound) only after an explanation.
+            result = await withPermissions(open)
+          } catch (e) {
+            if (!audio || declinedPermission(e) !== 'microphone') throw e
+            // No to the microphone: mirror anyway, with the sound left on the iPhone.
+            audio = false
+            setIphoneAudio(false)
+            writeFlag(IPHONE_AUDIO_KEY, false)
+            result = await open()
+          }
           setDeviceName(result.deviceName)
           if (audio && result.audio !== 'on') {
             showToast({ id: 'audio', tone: 'info', title: t('toast.soundOnPhone'), body: result.audio })
+          } else if (audio && isIosSerial(target.serial) && !isCompanionSerial(target.serial)) {
+            // The orange dot appears now: say why, and how to make it go away.
+            showToast({ id: 'audio', tone: 'info', title: t('toast.micIndicator'), body: t('toast.micIndicatorBody') })
           }
         }
         if (attempt.current === id) setPhase({ kind: 'live' })
@@ -345,7 +364,7 @@ export function App() {
         if (attempt.current === id) setPhase(describeStartError(e instanceof Error ? e.message : String(e)))
       }
     },
-    [fps, quality, audioOnComputer, showToast]
+    [fps, quality, androidAudio, iphoneAudio, showToast]
   )
 
   const streamingRef = useRef(streaming)
@@ -421,14 +440,15 @@ export function App() {
     setScreenOff(off)
   }, [selection, screenOff])
 
+  const setAudio = (iphone: boolean, on: boolean) => {
+    ;(iphone ? setIphoneAudio : setAndroidAudio)(on)
+    writeFlag(iphone ? IPHONE_AUDIO_KEY : AUDIO_KEY, on)
+  }
+
+  /** Moves the selected phone's sound between the phone and this computer. */
   const toggleAudio = async () => {
     const next = !audioOnComputer
-    setAudioOnComputer(next)
-    try {
-      localStorage.setItem(AUDIO_KEY, next ? '1' : '0')
-    } catch {
-      // Not persisted; still applies to this session.
-    }
+    setAudio(isIosSerial(selection?.kind === 'android' ? selection.serial : null), next)
     // Capturing sound is what silences the phone, so switching restarts it.
     if (selection?.kind === 'android' && streaming) {
       await stopAll()
@@ -532,6 +552,37 @@ export function App() {
     return () => clearInterval(id)
   }, [])
 
+  /**
+   * Several phones in their own windows, side by side. The phone shown here
+   * pops out last, since that hides this window.
+   */
+  const popOutPhones = (list: AndroidDevice[]) => {
+    const live = selection?.kind === 'android' && phase.kind === 'live' && hasFrames && stats ? selection.serial : null
+    const current = list.find((d) => d.serial === live)
+    const others = list.filter((d) => d !== current)
+    const count = list.length
+    others.forEach((d, index) =>
+      window.mirror.openDeviceWindow({
+        aspect: 1080 / 2340,
+        name: d.model ?? d.serial,
+        controllable: !isIosSerial(d.serial),
+        serial: d.serial,
+        mode: 'extra',
+        slot: { index, count }
+      })
+    )
+    if (current && stats) {
+      window.mirror.openDeviceWindow({
+        aspect: stats.width / stats.height,
+        name: deviceName,
+        controllable: !isIosSerial(current.serial),
+        serial: current.serial,
+        mode: 'popout',
+        slot: { index: count - 1, count }
+      })
+    }
+  }
+
   /** Another phone in its own window; the selected live phone pops out instead. */
   const openOwnWindow = (device: AndroidDevice) => {
     if (selection?.kind === 'android' && selection.serial === device.serial && phase.kind === 'live') {
@@ -596,6 +647,7 @@ export function App() {
           showTestStream={!packaged}
           windowed={windowed}
           onOpenWindow={openOwnWindow}
+          onPopOut={popOutPhones}
         />
       )}
       <main className="flex min-w-0 flex-1 flex-col">
@@ -710,7 +762,19 @@ export function App() {
         />
       )}
       {settingsOpen && (
-        <SettingsView onClose={() => setSettingsOpen(false)} audioOnComputer={audioOnComputer} onToggleAudio={() => void toggleAudio()} />
+        <SettingsView
+          onClose={() => setSettingsOpen(false)}
+          androidAudio={androidAudio}
+          iphoneAudio={iphoneAudio}
+          onAudioChange={(iphone, on) => {
+            setAudio(iphone, on)
+            // The phone on screen follows right away (switching restarts its capture).
+            const serial = selection?.kind === 'android' ? selection.serial : null
+            if (streaming && serial && isIosSerial(serial) === iphone && on !== audioOnComputer) {
+              void stopAll().then(() => start(selection, quality, on))
+            }
+          }}
+        />
       )}
       {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
       {wifiOpen && (

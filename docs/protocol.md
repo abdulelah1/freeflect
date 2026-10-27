@@ -154,8 +154,11 @@ differ and both proofs fail. Someone who records the exchange can only guess
 codes offline at 600 000 rounds per guess, and the code is dead once the window
 closes. The phone checks the desktop's proof before it pins `fp_seen`.
 
-After the answer, the `video` connection carries the packet format above with
-audio interleaved, and the desktop writes `k\n` to ask for a keyframe. The
+After the answer, the `video` connection carries the packet format above.
+The desktop writes one-letter commands to it: `k\n` asks for a keyframe, `a\n`
+asks for the iPhone's sound (then interleaved as above), and `m\n` keeps the
+sound on the iPhone again. A broadcast starts without sound; the desktop sends
+`a` only while a window plays it, so by default the sound stays on the phone. The
 `control` connection carries frames of a u32 length plus JSON both ways:
 `{"type":"clipboard","text"}`, or `{"type":"file","name","size"}` followed by
 `size` bytes. Received files are flagged `com.apple.quarantine`, so macOS asks

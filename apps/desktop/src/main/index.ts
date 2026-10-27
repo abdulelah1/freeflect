@@ -11,6 +11,7 @@ import { onSettingsChange, registerSettingsIpc, settings } from './settings'
 import { applyLanguage, onLanguageChange, registerI18nIpc } from './i18n'
 import { registerDevToolsIpc } from './devtools'
 import { registerDoctorIpc } from './doctor'
+import { registerPermissionIpc } from './permissions'
 import { registerFileIpc } from './files'
 import { installMenu } from './menu'
 import { registerIosControlIpc } from './iosControl'
@@ -131,6 +132,7 @@ registerDeviceWindowIpc({ mainWindow: () => win, onFixtureSwitch: () => {} })
 registerFileIpc(contents)
 registerWifiIpc(contents)
 registerDoctorIpc()
+registerPermissionIpc()
 registerDevToolsIpc()
 registerCompanionInstallerIpc(COMPANION_SOURCE)
 

@@ -12,6 +12,8 @@ final class SampleHandler: RPBroadcastSampleHandler {
     private var connected = false
     private var inFlight = 0
     private var forceKeyframe = true
+    /// The iPhone's sound stays on the iPhone until the desktop asks for it ("a"), and again after "m".
+    private var sendSound = false
     private let lock = NSLock()
     private static let maxInFlight = 6
     private let aac = AacEncoder()
@@ -35,13 +37,20 @@ final class SampleHandler: RPBroadcastSampleHandler {
                 break
             }
         }
-        // "k\n" from the desktop asks for a keyframe (new window, decoder reset).
+        // One-letter commands from the desktop: "k" keyframe (new window,
+        // decoder reset), "a" send the sound, "m" keep the sound on the iPhone.
         link.onData = { [weak self] data in
-            if data.contains(0x6B) {
-                self?.lock.lock()
-                self?.forceKeyframe = true
-                self?.lock.unlock()
+            guard let self else { return }
+            self.lock.lock()
+            for byte in data {
+                switch byte {
+                case UInt8(ascii: "k"): self.forceKeyframe = true
+                case UInt8(ascii: "a"): self.sendSound = true
+                case UInt8(ascii: "m"): self.sendSound = false
+                default: break
+                }
             }
+            self.lock.unlock()
         }
         // Audio is small and never dropped; the config goes first after connecting.
         aac.onConfig = { [weak self] in self?.link.send(audioPacket($0, ptsUs: 0, config: true)) }
@@ -58,7 +67,7 @@ final class SampleHandler: RPBroadcastSampleHandler {
     override func processSampleBuffer(_ sampleBuffer: CMSampleBuffer, with sampleBufferType: RPSampleBufferType) {
         if sampleBufferType == .audioApp {
             lock.lock()
-            let ready = connected
+            let ready = connected && sendSound
             lock.unlock()
             if ready { audioQueue.sync { aac.encode(sampleBuffer) } }
             return
