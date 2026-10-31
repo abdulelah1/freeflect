@@ -193,7 +193,10 @@
     "start": "Show only part of the screen",
     "note": "Screenshots and GIFs use the crop. Recordings keep the whole screen.",
     "whole": "Whole screen",
-    "apply": "Apply"
+    "apply": "Apply",
+    "remove": "Show whole screen",
+    "removeHint": "Remove the crop and show the whole screen again",
+    "removeShort": "Whole screen"
   },
   "drop": {
     "install": "Drop to install the app",

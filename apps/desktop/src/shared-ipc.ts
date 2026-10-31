@@ -363,6 +363,8 @@ export interface MirrorApi {
   onClipboardFromPhone(cb: (text: string) => void): () => void
 
   saveScreenshot(png: ArrayBuffer, deviceName: string): Promise<string>
+  /** Android: the phone's own full-resolution screenshot (PNG); null when unavailable. */
+  phoneScreenshot(serial: string): Promise<ArrayBuffer | null>
   /** Copies as image data (Notes, Messages) and as a file (Finder). */
   copyScreenshot(png: ArrayBuffer, deviceName: string): Promise<void>
   /** Saves an animated GIF to the recordings folder; returns the path. */

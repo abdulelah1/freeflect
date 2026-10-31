@@ -9,6 +9,11 @@ import { sendFileToCompanion } from './companion'
 import { udidForSerial } from './iosDevices'
 import { settings } from './settings'
 import { native } from './native'
+import { adbPath } from './adb'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
+
+const run = promisify(execFile)
 
 /** Copied screenshots stay on disk this long so they can still be pasted as files. */
 const COPIED_SCREENSHOT_TTL_MS = 24 * 60 * 60 * 1000
@@ -19,6 +24,7 @@ let queue: Promise<void> = Promise.resolve()
 
 export function registerFileIpc(getContents: () => WebContents | undefined): void {
   contentsRef = getContents
+  ipcMain.handle('screenshot:phone', (_e, serial: string) => phoneScreenshot(serial))
   ipcMain.handle('screenshot:save', async (_e, png: ArrayBuffer, deviceName: string) => {
     const dir = settings().screenshotsDir
     await mkdir(dir, { recursive: true })
@@ -93,6 +99,29 @@ export function registerFileIpc(getContents: () => WebContents | undefined): voi
       queue = queue.then(() => transfer(serial, path, (t) => getContents()?.send('files:transfer', t)))
     }
   })
+}
+
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+
+/**
+ * An Android phone's own screenshot (`screencap`): the full screen resolution,
+ * however small the mirror runs. Null for iPhones (their stream is already
+ * full size) or when the phone can't take one; the window then uses the frame.
+ */
+async function phoneScreenshot(serial: string): Promise<ArrayBuffer | null> {
+  if (isIosSerial(serial) || !/^[\w.:-]+$/.test(serial)) return null
+  try {
+    // No shell: the serial is a single argument.
+    const { stdout } = await run(adbPath(), ['-s', serial, 'exec-out', 'screencap', '-p'], {
+      encoding: 'buffer',
+      maxBuffer: 64 * 1024 * 1024,
+      timeout: 10_000
+    })
+    if (!stdout.subarray(0, 8).equals(PNG_SIGNATURE)) return null
+    return stdout.buffer.slice(stdout.byteOffset, stdout.byteOffset + stdout.byteLength) as ArrayBuffer
+  } catch {
+    return null
+  }
 }
 
 /** Raw pasteboard type for a file reference (Finder pastes these as files). */

@@ -1,6 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FromWorker, StreamStats, ToWorker } from './protocol'
 import type { Crop } from '../lib/crop'
+import { isIosSerial } from '../../../shared-ipc'
+
+/** Cuts a crop (fractions of the image) out of a PNG. */
+async function cropPng(png: ArrayBuffer, crop: Crop): Promise<ArrayBuffer> {
+  const image = await createImageBitmap(new Blob([png], { type: 'image/png' }))
+  const x = Math.round(crop.x * image.width)
+  const y = Math.round(crop.y * image.height)
+  const w = Math.max(1, Math.round(crop.w * image.width))
+  const h = Math.max(1, Math.round(crop.h * image.height))
+  const canvas = new OffscreenCanvas(w, h)
+  canvas.getContext('2d')!.drawImage(image, x, y, w, h, 0, 0, w, h)
+  image.close()
+  return (await canvas.convertToBlob({ type: 'image/png' })).arrayBuffer()
+}
 
 export interface GrabbedFrame {
   width: number
@@ -84,16 +98,28 @@ export function useVideoStream(active: boolean, serial?: string) {
     }
   }, [active, serial])
 
-  /** PNG of the frame currently on screen, or null when nothing is showing. */
-  const captureFrame = useCallback((crop?: Crop | null): Promise<ArrayBuffer | null> => {
-    const worker = workerRef.current
-    if (!worker) return Promise.resolve(null)
-    const id = Math.random()
-    return new Promise((resolve) => {
-      captures.current.set(id, resolve)
-      worker.postMessage({ type: 'capture', id, crop } satisfies ToWorker)
-    })
-  }, [])
+  /**
+   * PNG screenshot at the phone's full resolution, or null when nothing is
+   * showing. Android phones take it themselves, so a small or low-quality
+   * mirror (the device farm's tiles) still gives a sharp screenshot; iPhones
+   * stream at full size, so their frame is used.
+   */
+  const captureFrame = useCallback(
+    async (crop?: Crop | null): Promise<ArrayBuffer | null> => {
+      if (serial && !isIosSerial(serial)) {
+        const full = await window.mirror.phoneScreenshot(serial).catch(() => null)
+        if (full) return crop ? cropPng(full, crop) : full
+      }
+      const worker = workerRef.current
+      if (!worker) return null
+      const id = Math.random()
+      return new Promise((resolve) => {
+        captures.current.set(id, resolve)
+        worker.postMessage({ type: 'capture', id, crop } satisfies ToWorker)
+      })
+    },
+    [serial]
+  )
 
   /** Current frame scaled to `width` px wide, as RGBA, for GIF capture. */
   const grabFrame = useCallback((width: number, crop?: Crop | null): Promise<GrabbedFrame | null> => {

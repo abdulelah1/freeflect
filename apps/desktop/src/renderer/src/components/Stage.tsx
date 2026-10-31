@@ -13,6 +13,7 @@ import {
   CornersInIcon,
   CropIcon,
   CornersOutIcon,
+  ArrowsOutIcon,
   DownloadSimpleIcon,
   PackageIcon,
   PlayIcon,
@@ -22,7 +23,7 @@ import {
   SquareIcon,
   StopIcon
 } from '@phosphor-icons/react'
-import { useRef, useState, type DragEvent, type ReactNode, type RefObject } from 'react'
+import { useEffect, useRef, useState, type DragEvent, type ReactNode, type RefObject } from 'react'
 import { isCompanionSerial, isIosSerial, QUALITY_PRESETS, type KeyName, type QualityPreset } from '../../../shared-ipc'
 import { useIosControl } from '../hooks/useIosControl'
 import { usePhoneActions } from '../input/phoneActions'
@@ -105,6 +106,11 @@ export function Stage(props: Props) {
   const serial = selection?.kind === 'android' ? selection.serial : null
   const iosControl = useIosControl(isIos && live && !isCompanionSerial(serial) ? serial : null)
   const [croppingOpen, setCroppingOpen] = useState(false)
+  // The editor belongs to this phone's live picture: it closes when that ends,
+  // rather than coming back by itself later.
+  useEffect(() => {
+    if (!live) setCroppingOpen(false)
+  }, [live, serial])
   const cropping = croppingOpen && live && hasFrames
   // While editing, the whole screen shows so the box can be placed anywhere.
   const viewCrop = cropping ? null : props.crop
@@ -175,13 +181,26 @@ export function Stage(props: Props) {
                   <button
                     type="button"
                     onClick={() => setCroppingOpen((v) => !v)}
-                    disabled={!live || !hasFrames}
+                    // Always able to close the editor, even while frames pause.
+                    disabled={!croppingOpen && (!live || !hasFrames)}
                     aria-label={t('crop.label')}
                     aria-pressed={cropping || !!props.crop}
                     title={props.crop ? t('crop.change') : t('crop.start')}
                     className={`${iconButton} ${cropping || props.crop ? 'bg-accent-soft text-accent' : ''}`}
                   >
                     <CropIcon size={18} />
+                  </button>
+                )}
+                {isPhone && props.crop && !cropping && (
+                  // A crop is remembered for the phone; one click shows the whole screen again.
+                  <button
+                    type="button"
+                    onClick={() => props.onCropChange(null)}
+                    title={t('crop.removeHint')}
+                    className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-[var(--radius-control)] border border-accent bg-accent-soft px-2.5 text-xs font-medium text-accent hover:opacity-90"
+                  >
+                    <ArrowsOutIcon size={15} />
+                    {t('crop.removeShort')}
                   </button>
                 )}
                 {isPhone && (
