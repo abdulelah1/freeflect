@@ -26,7 +26,8 @@ export function CropEditor({ initial, onApply, onCancel }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onCancel()
-      if (e.key === 'Enter') onApply(rect)
+      // Enter on a focused button presses that button instead (Cancel stays Cancel).
+      else if (e.key === 'Enter' && !(e.target instanceof HTMLButtonElement)) onApply(rect)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -116,9 +117,16 @@ export function CropEditor({ initial, onApply, onCancel }: Props) {
           {t('crop.note')}
         </p>
         <div className="flex gap-1.5">
-          <button type="button" onClick={() => setRect(FULL)} className={overlayButton}>
-            {t('crop.whole')}
-          </button>
+          {initial ? (
+            // Leaves crop mode with the whole screen showing again.
+            <button type="button" onClick={() => onApply(null)} className={overlayButton}>
+              {t('crop.remove')}
+            </button>
+          ) : (
+            <button type="button" onClick={() => setRect(FULL)} className={overlayButton}>
+              {t('crop.whole')}
+            </button>
+          )}
           <button type="button" onClick={onCancel} className={overlayButton}>
             {t('common.cancel')}
           </button>

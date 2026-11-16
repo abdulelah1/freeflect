@@ -52,6 +52,7 @@ const api: MirrorApi = {
   onClipboardFromPhone: (cb) => subscribe<[string]>('clipboard:from-phone', cb),
 
   saveScreenshot: (png, deviceName) => ipcRenderer.invoke('screenshot:save', png, deviceName),
+  phoneScreenshot: (serial) => ipcRenderer.invoke('screenshot:phone', serial),
   copyScreenshot: (png, deviceName) => ipcRenderer.invoke('screenshot:copy', png, deviceName),
   saveGif: (gif, deviceName) => ipcRenderer.invoke('gif:save', gif, deviceName),
   showInFolder: (path) => ipcRenderer.send('shell:show-in-folder', path),
